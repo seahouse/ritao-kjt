@@ -27,6 +27,27 @@ struct OrderCreateKJTToERPData
     int _currentIndex;
 };
 
+/// 订单中购买商品信息
+struct SOItemInfo
+{
+    QString _productId;
+    QString _productName;
+    int _quantity;              // 购买数量
+    double _productPrice;       // 商品价格
+    double _taxPrice;           // 行邮税率金额
+    double _taxRate;            // 行邮税率
+    QString _sOItemSysNo;       //
+};
+
+/// 日志
+struct LogInfo
+{
+    QString _optTime;           // 操作时间
+    /// 操作类型  -90 订单锁定 -91 订单解锁 1 创建订单 2 订单审核 3 已出库待申报 4 已申报待通关 5 已通关发往顾客 66 订单物流 轨迹
+    int _optType;               // 操作类型
+    QString _optNote;           // 操作详情
+};
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -60,6 +81,7 @@ private:
     void orderInfoBatchGet();
 
     void parseReply(const QByteArray &data);
+    void insertOrder2ERPByJson(const QJsonObject &json);    // 向ERP中插入订单数据
 
 private:
     Ui::MainWindow *ui;

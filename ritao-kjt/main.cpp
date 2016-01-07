@@ -71,8 +71,8 @@ int main(int argc, char *argv[])
     QTextCodec *codec = QTextCodec::codecForName("UTF-8");
     QTextCodec::setCodecForLocale(codec);
 
-//    if (!createConnection())
-//        return -1;
+    if (!createConnection())
+        return -1;
 
     MainWindow w;
     w.show();

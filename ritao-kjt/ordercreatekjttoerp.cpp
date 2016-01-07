@@ -49,5 +49,5 @@ void OrderCreateKJTToERP::run(const QDateTime &dateTimeStart, const QDateTime &d
     url.append(kjt_url).append("?").append(params).append("&sign=").append(sign);
 
     qDebug() << url;
-    g_networkManager.get(QNetworkRequest(QUrl(url)));
+//    g_networkManager.get(QNetworkRequest(QUrl(url)));
 }

@@ -320,7 +320,13 @@ void MainWindow::parseReply(const QByteArray &data)
     case STOrderInfoBatchGet:
         opt = tr("下载订单");
         /// 解析数据，写入ERP数据库，并继续请求数据
-        ///
+        if ("0" == code)
+        {
+            QJsonObject data = json.value("Data").toObject();
+            QJsonArray orderListArray = data.value("OrderList").toArray();
+            for (int i = 0; i < orderListArray.size(); i++)
+                insertOrder2ERPByJson(orderListArray.at(i).toObject());
+        }
         orderInfoBatchGet();
         break;
     default:
@@ -377,4 +383,109 @@ void MainWindow::on_pushButton_3_clicked()
 void MainWindow::sOrderCreateKJTToERPFinished(bool error, const QString &msg)
 {
     qDebug() << error << msg;
+}
+
+void MainWindow::insertOrder2ERPByJson(const QJsonObject &json)
+{
+    int orderId = json.value("OrderID").toInt();        // Kjt 系统订单号
+    int merchantSysNo = json.value("MerchantSysNo").toInt();    //
+    QString merchantOrderID = json.value("MerchantOrderID").toString();     // 第三方商家订单号
+    QString orderDate = json.value("OrderDate").toString();     // 订单时间 ?? 解析规则 ??
+    /// 订单状态码规则
+    /// -4 系统作废
+    /// -1 作废
+    /// 0 待审核
+    /// 1 待出库
+    /// 4 已出库待申报
+    /// 41 已申报待通关
+    /// 45 已通关发往顾客
+    /// 5 订单完成
+    /// 6 申报失败订单作废
+    /// 65 通关失败订单作废
+    /// 7 订单拒收
+    int sOStatusCode = json.value("SOStatusCode").toInt();      // 订单当前状态代码
+    QString sOStatusDescription = json.value("SOStatusDescription").toString(); // 订单当前状态描述
+    int tradeType = json.value("TradeType").toInt();            // 贸易类型  0：直邮 1：自贸
+    int warehouseID = json.value("WarehouseID").toInt();        // 仓库编号  51 = 浦东机场自贸仓 52 = 洋山港自贸仓 53 = 外高桥自贸仓
+    QString auditTime = json.value("AuditTime").toString();     // 审核时间
+    QString sOOutStockTime = json.value("SOOutStockTime").toString();   // 出库时间
+    QString sOOutCustomsTime = json.value("SOOutCustomsTime").toString();   // 出区时间
+    int saleChannelSysNo = json.value("SaleChannelSysNo").toInt();      // 分销渠道编号
+    QString saleChannelName = json.value("SaleChannelName").toString(); // 分销渠道名称
+
+    QJsonObject foreignExchangePurchasingInfoObject = json.value("ForeignExchangePurchasingInfo").toObject();   // 订单支付信息
+    /// 购汇状态代码  -3：购汇异常 0：未购汇 1：待购汇 2：购汇中 3：购汇完成
+    int statusCode = foreignExchangePurchasingInfoObject.value("StatusCode").toInt();       // 购汇状态代码
+    QString statusDescrption = foreignExchangePurchasingInfoObject.value("StatusDescrption").toString();        // 购汇状态描述
+    QString purchasingCurrencyCode = foreignExchangePurchasingInfoObject.value("PurchasingCurrencyCode").toString();        // 购汇币种代码，如 EUR, JPY, AUD 等
+    double purchasingAmt = foreignExchangePurchasingInfoObject.value("PurchasingAmt").toDouble();       // 购汇金额
+    QString purchasingException = foreignExchangePurchasingInfoObject.value("PurchasingException").toString();  // 购汇异常
+
+    QJsonObject payInfoObject = json.value("PayInfo").toObject();       // 订单支付信息
+    double productAmount = payInfoObject.value("ProductAmount").toDouble();     // 商品总金额，保留 2 位小数（如 120.50 或 100.00，无费用时为 0）
+    double shippingAmount = payInfoObject.value("ShippingAmount").toDouble();   // 运费总金额，保留 2 位小数
+    double taxAmount = payInfoObject.value("TaxAmount").toDouble();     // 商品行邮税总金额，保留 2 位小数
+    double commissionAmount = payInfoObject.value("CommissionAmount").toDouble();       // 下单支付产生的手续费，保留 2 位小数
+    /// 支付方式编号  112: 支付宝 114: 财付通 117: 银联支付 118: 微信支付
+    int payTypeSysNo = payInfoObject.value("PayTypeSysNo").toInt();     // 支付方式编号
+    QString paySerialNumber = payInfoObject.value("PaySerialNumber").toString();        // 支付流水号，不能重复，订单申报必要信息
+    int payStatusCode = payInfoObject.value("PayStatusCode").toInt();   // 0:未支付 1:已支付未审核 2:已支付审核通过
+
+    QJsonObject shippingInfoObject = json.value("ShippingInfo").toObject();     // 订单配送信息
+    QString receiveName = shippingInfoObject.value("ReceiveName").toString();           // 收件人姓名
+    QString receivePhone = shippingInfoObject.value("ReceivePhone").toString();         // 收件人电话
+    QString receiveAddress = shippingInfoObject.value("ReceiveAddress").toString();     // 收件人收货地址，不包含省市区名称
+    /// 收货地区编号，至少需要到市级别（根据中华人民共和国国家统计局提供的《最新县及县以上行政区划代码（截止 2013 年 8月 31 日）》
+    /// http://www.stats.gov.cn/tjsj/tjbz/xzqhdm/201401/t20140116_501070.html
+    QString receiveAreaCode = shippingInfoObject.value("ReceiveAreaCode").toString();   // 收货地区编号
+    QString receiveZip = shippingInfoObject.value("ReceiveZip").toString();             // 收件地邮政编码
+    QString shipTypeID = shippingInfoObject.value("ShipTypeID").toString();             // 订单物流运输公司编号，参见附录《跨境通自贸仓支持的配送方式列表》
+    QString senderName = shippingInfoObject.value("SenderName").toString();             // 发件人姓名
+    QString senderTel = shippingInfoObject.value("SenderTel").toString();               // 发件人电话
+    QString senderCompanyName = shippingInfoObject.value("SenderCompanyName").toString();               // 发件人公司
+    QString senderAddr = shippingInfoObject.value("SenderAddr").toString();             // 发件人地址
+    QString senderZip = shippingInfoObject.value("SenderZip").toString();               // 发件地邮编
+    QString senderCity = shippingInfoObject.value("SenderCity").toString();             // 发件地城市
+    QString senderProvince = shippingInfoObject.value("SenderProvince").toString();     // 发件地省
+    QString senderCountry = shippingInfoObject.value("SenderCountry").toString();       // 发件地国家，例如：USA（代表美国）CHN（代表中国）
+    QString receiveAreaName = shippingInfoObject.value("ReceiveAreaName").toString();   // 收件省市区名称（省市区名称之间用半角逗号,隔开，如 上海,上海市,静安区）
+    QString trackingNumber = shippingInfoObject.value("TrackingNumber").toString();     // 订单物流运单号
+
+    QJsonObject sOAuthenticationInfoObject = json.value("SOAuthenticationInfo").toObject();         // 下单用户实名认证信息
+    QString name = sOAuthenticationInfoObject.value("Name").toString();             // 下单用户真实姓名
+    int iDCardType = sOAuthenticationInfoObject.value("IDCardType").toInt();        // 下单用户证件类型（0 – 身份证）
+    QString iDCardNumber = sOAuthenticationInfoObject.value("IDCardNumber").toString();             // 下单用户证件编号
+    QString phoneNumber = sOAuthenticationInfoObject.value("PhoneNumber").toString();               // 下单用户联系电话
+    QString email = sOAuthenticationInfoObject.value("Email").toString();           // 下单用户电子邮件
+    QString address = sOAuthenticationInfoObject.value("Address").toString();       // 下单用户联系地址
+
+    QJsonArray itemListObject = json.value("ItemList").toArray();               // 订单中购买商品列表
+    QList<SOItemInfo> sOItemInfoList;
+    for (int i = 0; i < itemListObject.size(); i++)
+    {
+        QJsonObject sOItemInfoObject = itemListObject.at(i).toObject();
+        SOItemInfo sOitemInfo;
+        sOitemInfo._productName = sOItemInfoObject.value("ProductName").toString();             // 商品名称
+        sOitemInfo._productId = sOItemInfoObject.value("ProductID").toString();                 // KJT 商品 ID
+        sOitemInfo._quantity = sOItemInfoObject.value("Quantity").toInt();
+        sOitemInfo._productPrice = sOItemInfoObject.value("ProductPrice").toDouble();
+        sOitemInfo._taxPrice = sOItemInfoObject.value("TaxPrice").toDouble();
+        sOitemInfo._taxRate = sOItemInfoObject.value("TaxRate").toDouble();
+        sOitemInfo._sOItemSysNo = sOItemInfoObject.value("SOItemSysNo").toInt();
+
+        sOItemInfoList.append(sOitemInfo);
+    }
+
+    QJsonArray logsArray = json.value("Logs").toArray();
+    QList<LogInfo> logInfoList;
+    for (int i = 0; i < logsArray.size(); i++)
+    {
+        QJsonObject logObject = logsArray.at(i).toObject();
+        LogInfo logInfo;
+        logInfo._optTime = logObject.value("OptTime").toString();
+        logInfo._optType = logObject.value("OptType").toInt();
+        logInfo._optNote = logObject.value("OptNote").toString();
+    }
+
+    qDebug() << orderId;
 }
