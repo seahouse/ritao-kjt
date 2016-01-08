@@ -161,33 +161,38 @@ void MainWindow::synchronizeProductCreate()
         paramsMap["nonce"] = QString::number(100000 + qrand() % (999999 - 100000)); // QString::number(100000 + qrand() % (999999 - 100000));
 
         QJsonObject json;
-        json["IsSettledDown"] = query.value(tr("入住商品")).toInt();     // 是否为入驻商品。0 = 否 1 = 是
-        json["MerchantProductID"] = query.value(tr("商品KID")).toString();
-        json["ProductName"] = query.value(tr("商品名称")).toString();
-        json["BriefName"] = "HW"; // query.value(tr("品名简称")).toString();    // 商品简称
-        json["BrandCode"] = "950"; // query.value(tr("商品品牌ID")).toString();    // 品牌编号 code
-        json["C3Code"] = "A46"; // query.value(tr("商品分类ID")).toString();
-        json["ProductTradeType"] = query.value(tr("贸易类型")).toInt();
-        json["OriginCode"] = "JP";  // query.value(tr("产地")).toString();      // 产地，两位字母
-        json["ProductDesc"] = query.value(tr("商品简述")).toString();
+        json["IsSettledDown"] = query.value(tr("入住商品")).toInt();                // 是否为入驻商品。0 = 否 1 = 是
+        json["MerchantProductID"] = query.value(tr("商品KID")).toString();            // 商户商品 ID
+        json["ProductName"] = query.value(tr("商品名称")).toString();               // 商品名称
+        json["BriefName"] = "HW"; // query.value(tr("品名简称")).toString();        // 商品简称
+        json["BrandCode"] = "950"; // query.value(tr("商品品牌ID")).toString();     // 品牌编号 code
+        json["C3Code"] = "A46"; // query.value(tr("商品分类ID")).toString();        // 三级分类 code
+        json["ProductTradeType"] = query.value(tr("贸易类型")).toInt();             // 贸易类型  0 = 直邮 1 = 自贸
+        json["OriginCode"] = "JP";  // query.value(tr("产地")).toString();            // 产地，两位字母
+        json["ProductDesc"] = query.value(tr("商品简述")).toString();               // 商品简述
 
-        QJsonObject productPriceInfoJsonObject;
+        QJsonObject productPriceInfoJsonObject;                     // 商品价格信息
         productPriceInfoJsonObject["CurrentPrice"] = query.value(tr("销售价")).toDouble();
         json["ProductPriceInfo"] = productPriceInfoJsonObject;
 
-        QJsonObject productEntryInfoJsonObject;
+        QJsonObject productEntryInfoJsonObject;                     // 商品备案信息
         productEntryInfoJsonObject["ProductNameEN"] = query.value(tr("商品英文名称")).toString();
         productEntryInfoJsonObject["Specifications"] = tr("30＊10片");   // ?? 30*10 // query.value(tr("商品规格")).toString();
         productEntryInfoJsonObject["TaxUnit"] = "g";   // query.value(tr("计税单位")).toString(); // 计税单位, 不能为空!!
-        productEntryInfoJsonObject["CustomsCode"] = "2244"; // query.value(tr("关区代码")).toString();  // 海关关区根据商品所入仓库对应的四位数关区代码填写 2244 – 直邮进口模式 2216 – 浦东机场自贸模式 2249 – 洋山港自贸模式 2218 – 外高桥自贸模式
-        productEntryInfoJsonObject["StoreType"] = 0;    // query.value(tr("运输方式")).toString();
+        /// 海关关区根据商品所入仓库对应的四位数关区代码填写
+        /// 2244 – 直邮进口模式
+        /// 2216 – 浦东机场自贸模式
+        /// 2249 – 洋山港自贸模式
+        /// 2218 – 外高桥自贸模式
+        productEntryInfoJsonObject["CustomsCode"] = "2244"; // query.value(tr("关区代码")).toString();  // 海关关区根据商品所入仓库对应的四位数关区代码填写
+        productEntryInfoJsonObject["StoreType"] = 0;    // query.value(tr("运输方式")).toString();      // 运输方式（默认0，常温） 0 = 常温 1 = 冷藏 2 = 冷冻
         productEntryInfoJsonObject["ApplyUnit"] = "123";    // query.value(tr("申报单位")).toString();  // 申报单位, 不能为空
-        productEntryInfoJsonObject["ApplyQty"] = 123;   // query.value(tr("申报数量")).toString();  // 申报数量, 不能为空
+        productEntryInfoJsonObject["ApplyQty"] = 123;   // query.value(tr("申报数量")).toInt();  // 申报数量, 不能为空
         productEntryInfoJsonObject["GrossWeight"] = 12.0;   // query.value(tr("商品毛重")).toDouble();
         productEntryInfoJsonObject["SuttleWeight"] = 10.0;  // query.value(tr("商品净重")).toDouble();
         json["ProductEntryInfo"] = productEntryInfoJsonObject;
 
-        QJsonObject productMaintainInfoJsonObject;
+        QJsonObject productMaintainInfoJsonObject;                      // 商品维护信息
         productMaintainInfoJsonObject["ProductModel"] = "123";  // query.value(tr("商品型号")).toString();
         productMaintainInfoJsonObject["Weight"] = 10.0;     // query.value(tr("商品物流重量")).toDouble();
         productMaintainInfoJsonObject["Length"] = query.value(tr("长度")).toDouble();
@@ -468,7 +473,7 @@ void MainWindow::insertOrder2ERPByJson(const QJsonObject &json)
         SOItemInfo sOitemInfo;
         sOitemInfo._productName = sOItemInfoObject.value("ProductName").toString();             // 商品名称
         sOitemInfo._productId = sOItemInfoObject.value("ProductID").toString();                 // KJT 商品 ID
-        sOitemInfo._quantity = sOItemInfoObject.value("Quantity").toInt();
+        sOitemInfo._quantity = sOItemInfoObject.value("Quantity").toInt();                      //
         sOitemInfo._productPrice = sOItemInfoObject.value("ProductPrice").toDouble();
         sOitemInfo._taxPrice = sOItemInfoObject.value("TaxPrice").toDouble();
         sOitemInfo._taxRate = sOItemInfoObject.value("TaxRate").toDouble();
@@ -477,7 +482,7 @@ void MainWindow::insertOrder2ERPByJson(const QJsonObject &json)
         sOItemInfoList.append(sOitemInfo);
     }
 
-    QJsonArray logsArray = json.value("Logs").toArray();
+    QJsonArray logsArray = json.value("Logs").toArray();                        // 订单日志
     QList<LogInfo> logInfoList;
     for (int i = 0; i < logsArray.size(); i++)
     {
