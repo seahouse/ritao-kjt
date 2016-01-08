@@ -390,7 +390,8 @@ void MainWindow::insertOrder2ERPByJson(const QJsonObject &json)
     int orderId = json.value("OrderID").toInt();        // Kjt 系统订单号
     int merchantSysNo = json.value("MerchantSysNo").toInt();    //
     QString merchantOrderID = json.value("MerchantOrderID").toString();     // 第三方商家订单号
-    QString orderDate = json.value("OrderDate").toString();     // 订单时间 ?? 解析规则 ??
+    /// 跨镜通将会把日期修改为 yyyy-MM-dd hh:mm:ss 形式。到时再修改此处
+    QDateTime orderDate = convertKjtTime(json.value("OrderDate").toString());           // 订单时间
     /// 订单状态码规则
     /// -4 系统作废
     /// -1 作废
@@ -403,13 +404,13 @@ void MainWindow::insertOrder2ERPByJson(const QJsonObject &json)
     /// 6 申报失败订单作废
     /// 65 通关失败订单作废
     /// 7 订单拒收
-    int sOStatusCode = json.value("SOStatusCode").toInt();      // 订单当前状态代码
-    QString sOStatusDescription = json.value("SOStatusDescription").toString(); // 订单当前状态描述
-    int tradeType = json.value("TradeType").toInt();            // 贸易类型  0：直邮 1：自贸
-    int warehouseID = json.value("WarehouseID").toInt();        // 仓库编号  51 = 浦东机场自贸仓 52 = 洋山港自贸仓 53 = 外高桥自贸仓
-    QString auditTime = json.value("AuditTime").toString();     // 审核时间
-    QString sOOutStockTime = json.value("SOOutStockTime").toString();   // 出库时间
-    QString sOOutCustomsTime = json.value("SOOutCustomsTime").toString();   // 出区时间
+    int sOStatusCode = json.value("SOStatusCode").toInt();              // 订单当前状态代码
+    QString sOStatusDescription = json.value("SOStatusDescription").toString();     // 订单当前状态描述
+    int tradeType = json.value("TradeType").toInt();                    // 贸易类型  0：直邮 1：自贸
+    int warehouseID = json.value("WarehouseID").toInt();                // 仓库编号  51 = 浦东机场自贸仓 52 = 洋山港自贸仓 53 = 外高桥自贸仓
+    QDateTime auditTime = convertKjtTime(json.value("AuditTime").toString());       // 审核时间
+    QDateTime sOOutStockTime = convertKjtTime(json.value("SOOutStockTime").toString());         // 出库时间
+    QDateTime sOOutCustomsTime = convertKjtTime(json.value("SOOutCustomsTime").toString());     // 出区时间
     int saleChannelSysNo = json.value("SaleChannelSysNo").toInt();      // 分销渠道编号
     QString saleChannelName = json.value("SaleChannelName").toString(); // 分销渠道名称
 
@@ -429,7 +430,7 @@ void MainWindow::insertOrder2ERPByJson(const QJsonObject &json)
     /// 支付方式编号  112: 支付宝 114: 财付通 117: 银联支付 118: 微信支付
     int payTypeSysNo = payInfoObject.value("PayTypeSysNo").toInt();     // 支付方式编号
     QString paySerialNumber = payInfoObject.value("PaySerialNumber").toString();        // 支付流水号，不能重复，订单申报必要信息
-    int payStatusCode = payInfoObject.value("PayStatusCode").toInt();   // 0:未支付 1:已支付未审核 2:已支付审核通过
+    int payStatusCode = payInfoObject.value("PayStatusCode").toInt();   // 支付状态码  0:未支付 1:已支付未审核 2:已支付审核通过
 
     QJsonObject shippingInfoObject = json.value("ShippingInfo").toObject();     // 订单配送信息
     QString receiveName = shippingInfoObject.value("ReceiveName").toString();           // 收件人姓名
@@ -482,10 +483,19 @@ void MainWindow::insertOrder2ERPByJson(const QJsonObject &json)
     {
         QJsonObject logObject = logsArray.at(i).toObject();
         LogInfo logInfo;
-        logInfo._optTime = logObject.value("OptTime").toString();
+        logInfo._optTime = convertKjtTime(logObject.value("OptTime").toString());
         logInfo._optType = logObject.value("OptType").toInt();
         logInfo._optNote = logObject.value("OptNote").toString();
+
+        logInfoList.append(logInfo);
     }
 
-    qDebug() << orderId;
+    qDebug() << orderId << orderDate;
+}
+
+QDateTime MainWindow::convertKjtTime(const QString &kjtTime)
+{
+    /// 跨镜通将会把日期修改为 yyyy-MM-dd hh:mm:ss 形式。到时再修改此处
+    qint64 utcTime = kjtTime.mid(kjtTime.indexOf("(") + 1, 13).toLongLong();
+    return QDateTime::fromMSecsSinceEpoch(utcTime);      // 订单时间
 }

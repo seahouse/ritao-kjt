@@ -14,16 +14,19 @@ static bool createConnection()
     if (!db.isValid())
     {
         db = QSqlDatabase::addDatabase("QODBC");
-//        db.setHostName("120.55.165.90,9001");
-//        db.setDatabaseName("dayamoy");
+#ifndef QT_NO_DEBUG
+        db.setDatabaseName("DRIVER={SQL SERVER};SERVER=localhost;DATABASE=dayamoy;");
+        db.setUserName("sa");
+        db.setPassword("liangyi0328");
+//        db.setDatabaseName("DRIVER={SQL SERVER};SERVER=120.55.165.90,9001;DATABASE=dayamoy;");
+//        db.setUserName("dayamoyadmin");
+//        db.setPassword("dayamoyadmin2015");
+#else
         db.setDatabaseName("DRIVER={SQL SERVER};SERVER=120.55.165.90,9001;DATABASE=dayamoy;");
         db.setUserName("dayamoyadmin");
         db.setPassword("dayamoyadmin2015");
-//        db = QSqlDatabase::addDatabase("QMYSQL");
-//        db.setHostName(g_config.sqlServer());
-//        db.setDatabaseName(g_config.sqlDatabase());
-//        db.setUserName(g_config.sqlUsername());
-//        db.setPassword(g_config.sqlPassword());
+#endif
+
     }
 
 //    QString dns = "DRIVER={SQL SERVER};SERVER=" + hostName + ";DATABASE=" + dbName + ";";

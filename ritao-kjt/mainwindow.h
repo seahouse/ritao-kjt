@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QQueue>
 #include <QMap>
+#include <QDateTime>
 
 class QNetworkAccessManager;
 class QNetworkReply;
@@ -42,7 +43,7 @@ struct SOItemInfo
 /// 日志
 struct LogInfo
 {
-    QString _optTime;           // 操作时间
+    QDateTime _optTime;         // 操作时间
     /// 操作类型  -90 订单锁定 -91 订单解锁 1 创建订单 2 订单审核 3 已出库待申报 4 已申报待通关 5 已通关发往顾客 66 订单物流 轨迹
     int _optType;               // 操作类型
     QString _optNote;           // 操作详情
@@ -82,6 +83,7 @@ private:
 
     void parseReply(const QByteArray &data);
     void insertOrder2ERPByJson(const QJsonObject &json);    // 向ERP中插入订单数据
+    QDateTime convertKjtTime(const QString &kjtTime);       // 将跨镜通返回的日期类型转换为QDateTime。后面跨境通将修改返回的格式，到时需修改此处
 
 private:
     Ui::MainWindow *ui;
