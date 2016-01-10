@@ -127,6 +127,15 @@ void MainWindow::on_pushButton_2_clicked()
 void MainWindow::sTimeout()
 {
     _timer->stop();
+
+    switch (_synchronizeType) {
+    case STOrderInfoBatchGet:
+        orderInfoBatchGet();
+        break;
+    default:
+        break;
+    }
+
 }
 
 void MainWindow::synchronizeProductCreate()
@@ -185,7 +194,7 @@ void MainWindow::synchronizeProductCreate()
         /// 2249 – 洋山港自贸模式
         /// 2218 – 外高桥自贸模式
         productEntryInfoJsonObject["CustomsCode"] = "2244"; // query.value(tr("关区代码")).toString();  // 海关关区根据商品所入仓库对应的四位数关区代码填写
-        productEntryInfoJsonObject["StoreType"] = 0;    // query.value(tr("运输方式")).toString();      // 运输方式（默认0，常温） 0 = 常温 1 = 冷藏 2 = 冷冻
+        productEntryInfoJsonObject["StoreType"] = 0;    // query.value(tr("运输方式")).toInt();         // 运输方式（默认0，常温） 0 = 常温 1 = 冷藏 2 = 冷冻
         productEntryInfoJsonObject["ApplyUnit"] = "123";    // query.value(tr("申报单位")).toString();  // 申报单位, 不能为空
         productEntryInfoJsonObject["ApplyQty"] = 123;   // query.value(tr("申报数量")).toInt();  // 申报数量, 不能为空
         productEntryInfoJsonObject["GrossWeight"] = 12.0;   // query.value(tr("商品毛重")).toDouble();
@@ -332,7 +341,7 @@ void MainWindow::parseReply(const QByteArray &data)
             for (int i = 0; i < orderListArray.size(); i++)
                 insertOrder2ERPByJson(orderListArray.at(i).toObject());
         }
-        orderInfoBatchGet();
+        _timer->start(1000);
         break;
     default:
         break;
@@ -495,7 +504,100 @@ void MainWindow::insertOrder2ERPByJson(const QJsonObject &json)
         logInfoList.append(logInfo);
     }
 
-    qDebug() << orderId << orderDate;
+    qDebug() << orderId << merchantOrderID << paySerialNumber;
+//    if (10022053 != orderId) return;
+
+    QSqlQuery query;
+    query.prepare(tr("insert into 订单("
+                     "订单号, 订单类型, 第三方订单号, 下单日期, 跨境通订单状态, "
+                     "贸易类型, 审核日期, 发货日期, 商品总金额, 配送费用, "
+                     "税金, 支付手续费, 支付方式, 支付流水号, 付款状态, "
+                     "收货人, 手机号码, 收货地址, 邮政编码, 发件人姓名, "
+                     "发件人电话, 发件人地址, 发件地邮编, 运单号, 个人姓名, "
+                     "纳税人识别号, 注册电话, 电子邮件, 获取时间 "
+                     ") values ("
+                     ":OrderID, :OrderType, :MerchantOrderID, :OrderDate, :SOStatusCode, "
+                     ":TradeType, :AuditTime, :SOOutStockTime, :ProductAmount, :ShippingAmount, "
+                     ":TaxAmount, :CommissionAmount, :PayTypeSysNo, :PaySerialNumber, :PayStatusCode, "
+                     ":ReceiveName, :ReceivePhone, :ReceiveAddress, :ReceiveZip, :SenderName, "
+                     ":SenderTel, :SenderAddr, :SenderZip, :TrackingNumber, :Name, "
+                     ":IDCardNumber, :PhoneNumber, :Email, :GetTime "
+                     ")"));
+    query.bindValue(":OrderID", orderId);
+    query.bindValue(":OrderType", "kjt");               // 固定为 kjt
+    query.bindValue(":MerchantOrderID", merchantOrderID.isNull() ? "" : merchantOrderID);   // merchantOrderID, ERP中还未启用 第三方订单号。 由于跨境通的返回信息有空，erp中需要不为空，暂定为 ""
+    query.bindValue(":OrderDate", orderDate);
+    query.bindValue(":SOStatusCode", sOStatusCode);
+
+    query.bindValue(":TradeType", tradeType);
+    query.bindValue(":AuditTime", auditTime);
+    query.bindValue(":SOOutStockTime", sOOutStockTime);
+    query.bindValue(":ProductAmount", productAmount);
+    query.bindValue(":ShippingAmount", shippingAmount);
+
+    query.bindValue(":TaxAmount", taxAmount);
+    query.bindValue(":CommissionAmount", commissionAmount);
+    query.bindValue(":PayTypeSysNo", payTypeSysNo);
+    query.bindValue(":PaySerialNumber", paySerialNumber.isNull() ? "" : paySerialNumber);
+    query.bindValue(":PayStatusCode", payStatusCode);
+
+    query.bindValue(":ReceiveName", receiveName);
+    query.bindValue(":ReceivePhone", receivePhone.isNull() ? "" : receivePhone);
+    query.bindValue(":ReceiveAddress", receiveAreaName + receiveAddress);
+    query.bindValue(":ReceiveZip", receiveZip);
+    query.bindValue(":SenderName", senderName.isNull() ? "" : senderName);
+
+    query.bindValue(":SenderTel", senderTel.isNull() ? "" : senderTel);
+    query.bindValue(":SenderAddr", senderAddr.isNull() ? "" : senderAddr);
+    query.bindValue(":SenderZip", senderZip.isNull() ? "" : senderZip);
+    query.bindValue(":TrackingNumber", trackingNumber.isNull() ? "" : trackingNumber);
+    query.bindValue(":Name", name);
+
+    query.bindValue(":IDCardNumber", iDCardNumber);
+    query.bindValue(":PhoneNumber", phoneNumber.isNull() ? "" : phoneNumber);
+    query.bindValue(":Email", email);
+    query.bindValue(":GetTime", QDateTime::currentDateTime());              // 同步时间为当前时间
+    if (!query.exec())
+    {
+//        qFatal(query.lastError().text().toStdString().c_str());
+        qInfo() << query.lastError().text();
+    }
+    else
+    {
+        /// 插入订单商品数据
+        int parentId = query.lastInsertId().toInt();        // 订单id
+        if (parentId > 0)
+        {
+            QSqlQuery queryItemInfo;
+            foreach (SOItemInfo sOitemInfo, sOItemInfoList) {
+                queryItemInfo.prepare(tr("insert into 订单商品 ("
+                                         "订单id, 商品名称, 商品编号, 购买数量, 销售单价 "
+                                         ") values ("
+                                         ":OrderId, :ProductName, :ProductID, :Quantity, :ProductPrice"
+                                         ")"));
+                queryItemInfo.bindValue(":OrderId", parentId);
+                queryItemInfo.bindValue(":ProductName", sOitemInfo._productName.isNull() ? "" : sOitemInfo._productName);
+                queryItemInfo.bindValue(":ProductID", sOitemInfo._productId.isNull() ? "" : sOitemInfo._productId);
+                queryItemInfo.bindValue(":Quantity", sOitemInfo._quantity);
+                queryItemInfo.bindValue(":ProductPrice", sOitemInfo._productPrice);
+
+                if (!queryItemInfo.exec())
+                {
+                    qInfo() << queryItemInfo.lastError().text();
+                }
+            }
+        }
+
+        /// 写入数据同步记录
+        if (parentId > 0)
+        {
+//            QSqlQuery queryDataSynchronize;
+//            queryDataSynchronize.prepare(tr("insert into 数据同步 ("
+//                                            "ERP, ERP, "
+//                                            ")"));
+        }
+    }
+
 }
 
 QDateTime MainWindow::convertKjtTime(const QString &kjtTime)

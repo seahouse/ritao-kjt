@@ -29,7 +29,8 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
             fflush(stdout);
             break;
         case QtInfoMsg:
-            out << QString("Info: %1\r\n")          //  (%2:%3, %4)
+            out << QString("Info: (%1) %2\r\n")          //  (%2:%3, %4)
+                   .arg(QDateTime::currentDateTime().toString("hh:mm:ss"))
                    .arg(localMsg.constData())
 //                   .arg(context.file)
 //                   .arg(QString::number(context.line))
@@ -39,12 +40,15 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
             fflush(stdout);
             break;
         case QtFatalMsg:
-            out << QString("Fatal: %1 (%2:%3, %4)\n")
+            out << QString("Fatal: (%1) %2\r\n")            // (%2:%3, %4)
+                   .arg(QDateTime::currentDateTime().toString("hh:mm:ss"))
                    .arg(localMsg.constData())
-                   .arg(context.file)
-                   .arg(QString::number(context.line))
-                   .arg(context.function);
+//                   .arg(context.file)
+//                   .arg(QString::number(context.line))
+//                   .arg(context.function)
+                   ;
             fprintf(stderr, "Fatal: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+            fflush(stderr);
             break;
         case QtSystemMsg:
             out << QString("Critical: %1 (%2:%3, %4)\n")
