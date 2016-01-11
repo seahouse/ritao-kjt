@@ -38,13 +38,22 @@ MainWindow::MainWindow(QWidget *parent) :
     g_paramsMap["version"] = kjt_version;               // 由接口提供方指定的接口版本
     g_paramsMap["format"] = kjt_format;               // 接口返回结果类型:json
 
-    _orderCreateKJTToERP = new OrderCreateKJTToERP();
-    connect(_orderCreateKJTToERP, SIGNAL(finished(bool,QString)), this, SLOT(sOrderCreateKJTToERPFinished(bool, QString)));
+//    _orderCreateKJTToERP = new OrderCreateKJTToERP();
+//    connect(_orderCreateKJTToERP, SIGNAL(finished(bool,QString)), this, SLOT(sOrderCreateKJTToERPFinished(bool, QString)));
+
+    connect(ui->pbnStart, SIGNAL(clicked(bool)), this, SLOT(sStart()));
+
+    ui->pushButton->hide();
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::sStart()
+{
+    on_pushButton_2_clicked();
 }
 
 void MainWindow::on_pushButton_clicked()
@@ -121,7 +130,13 @@ void MainWindow::on_pushButton_2_clicked()
         _productIdQueue.enqueue(query.value(tr("同步主键KID")).toInt());
 
     qDebug() << _productIdQueue;
-    synchronizeProductCreate();
+    if (_productIdQueue.isEmpty())
+    {
+        output(tr("没有需要同步的商品记录"), MTInfo);
+        on_pushButton_3_clicked();
+    }
+    else
+        synchronizeProductCreate();
 }
 
 void MainWindow::sTimeout()
@@ -132,6 +147,9 @@ void MainWindow::sTimeout()
     case STOrderInfoBatchGet:
         orderInfoBatchGet();
         break;
+    case STNone:
+        sStart();
+        break;
     default:
         break;
     }
@@ -140,7 +158,11 @@ void MainWindow::sTimeout()
 
 void MainWindow::synchronizeProductCreate()
 {
-    if (_productIdQueue.isEmpty()) return;
+    if (_productIdQueue.isEmpty())
+    {
+        on_pushButton_3_clicked();
+        return;
+    }
 
     _currentLocalId = _productIdQueue.dequeue();
 
@@ -243,14 +265,22 @@ void MainWindow::synchronizeProductCreate()
         req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
         req.setHeader(QNetworkRequest::ContentLengthHeader, params.toLatin1().length());
         _manager->post(req, params.toLatin1());
-
     }
 }
 
 void MainWindow::orderInfoBatchGet()
 {
     _synchronizeType = STOrderInfoBatchGet;
-    if (_orderCreateKJTToERPData._currentIndex >= _orderCreateKJTToERPData._total) return;
+    if (_orderCreateKJTToERPData._currentIndex >= _orderCreateKJTToERPData._total)
+    {
+        setOrderGetFromKJTTime();   // 执行结束，修改系统参数的时间
+
+        /// 执行结束，归为，30分钟后再次执行
+        _synchronizeType = STNone;
+        _timer->start(30000);
+
+        return;
+    }
 
     QMap<QString, QString> paramsMap(g_paramsMap);
     paramsMap["method"] = "Order.OrderInfoBatchGet";    // 由接口提供方指定的接口标识符
@@ -312,7 +342,7 @@ void MainWindow::parseReply(const QByteArray &data)
         }
         break;
     case STOrderCreateKJTToERP:
-        opt = tr("下载订单");
+        opt = tr("获取订单");
         _orderCreateKJTToERPData._replyData._code = code;
         _orderCreateKJTToERPData._replyData._desc = desc;
         if ("0" == code)
@@ -353,21 +383,33 @@ void MainWindow::parseReply(const QByteArray &data)
 void MainWindow::on_pushButton_3_clicked()
 {
     _synchronizeType = STOrderCreateKJTToERP;
+    _orderCreateKJTToERPData._success = true;
 
-    _orderCreateKJTToERP->run(ui->dateTimeEdit->dateTime(), ui->dateTimeEdit_2->dateTime());
+//    _orderCreateKJTToERP->run(ui->dateTimeEdit->dateTime(), ui->dateTimeEdit_2->dateTime());
 
-    QMap<QString, QString> paramsMap;
-    paramsMap["appid"] = kjt_appid;
+    QMap<QString, QString> paramsMap(g_paramsMap);
     paramsMap["method"] = "Order.OrderIDQuery";    // 由接口提供方指定的接口标识符
-    paramsMap["version"] = kjt_version;               // 由接口提供方指定的接口版本
-    paramsMap["format"] = kjt_format;               // 接口返回结果类型:json
     paramsMap["timestamp"] = QDateTime::currentDateTime().toString("yyyyMMddhhmmss");       // 调用方时间戳，格式为“4 位年+2 位月+2 位日+2 位小时(24 小时制)+2 位分+2 位秒”
-//    qsrand(time(NULL));
     paramsMap["nonce"] = QString::number(100000 + qrand() % (999999 - 100000)); // QString::number(100000 + qrand() % (999999 - 100000));
 
+    /// 获取上次运行的结束日期，作为本次的起始日期
+    QDateTime dateStart;
+    QSqlQuery query;
+    query.prepare(tr("select 参数内容Date from 系统参数 where 参数分组='跨境通' and 参数名称='订单下载结束时间'"));
+    if (!query.exec())
+        qInfo() << query.lastError().text();
+    else if (query.first())
+        dateStart = query.value(tr("参数内容Date")).toDateTime();
+
+    if (!dateStart.isValid())
+        dateStart = QDateTime(QDate(1900, 1, 1));
+    qDebug() << dateStart;
+    _orderCreateKJTToERPData._dateStart = dateStart;
+    _orderCreateKJTToERPData._dateEnd = QDateTime::currentDateTime();
+
     QJsonObject json;
-    json["OrderDateBegin"] = "2015-01-01 00:00:00";
-    json["OrderDateEnd"] = "2016-01-01 00:00:00";
+    json["OrderDateBegin"] = dateStart.toString("yyyy-MM-dd hh:mm:ss");
+    json["OrderDateEnd"] = _orderCreateKJTToERPData._dateEnd.toString("yyyy-MM-dd hh:mm:ss");
     QJsonDocument jsonDoc(json);
     qDebug() << jsonDoc.toJson(QJsonDocument::Compact);
 
@@ -504,10 +546,28 @@ void MainWindow::insertOrder2ERPByJson(const QJsonObject &json)
         logInfoList.append(logInfo);
     }
 
-    qDebug() << orderId << merchantOrderID << paySerialNumber;
+    qDebug() << orderId << merchantOrderID << paySerialNumber << qrand();
 //    if (10022053 != orderId) return;
 
+    /// 如果“第三方商家订单号”这个字段不为空，则表示是其他平台上传的订单，此处不做下载处理
+    if (!merchantOrderID.isNull()) return;
+
     QSqlQuery query;
+    query.prepare(tr("select * from 订单 where 订单类型=:OrderType and 第三方订单号=:MerchantOrderID"));
+    query.bindValue(":OrderType", "kjt");
+    query.bindValue(":MerchantOrderID", QString::number(orderId));
+    if (!query.exec())
+    {
+        qInfo() << query.lastError().text();
+        _orderCreateKJTToERPData._success = false;
+    }
+    /// 已存在此订单编号，直接返回
+    if (query.first())
+    {
+        qInfo() << tr("此订单已存在。kjt系统订单号：")  + QString::number(orderId);
+        return;
+    }
+
     query.prepare(tr("insert into 订单("
                      "订单号, 订单类型, 第三方订单号, 下单日期, 跨境通订单状态, "
                      "贸易类型, 审核日期, 发货日期, 商品总金额, 配送费用, "
@@ -523,9 +583,18 @@ void MainWindow::insertOrder2ERPByJson(const QJsonObject &json)
                      ":SenderTel, :SenderAddr, :SenderZip, :TrackingNumber, :Name, "
                      ":IDCardNumber, :PhoneNumber, :Email, :GetTime "
                      ")"));
-    query.bindValue(":OrderID", orderId);
+
+    /// 订单号规则
+    /// 01（表示主订单） + 两位随机数 + 当前时间的日（两位） + 当前时间的月+70（两位） + 四位随机数
+    QString orderNumber = QString("%1%2%3%4%5")
+            .arg("01")
+            .arg(QString::number(qrand() % 100), 2, '0')
+            .arg(QDate::currentDate().toString("dd"))
+            .arg(QString::number(QDate::currentDate().month() + 70))
+            .arg(QString::number(qrand() % 10000), 4, '0');
+    query.bindValue(":OrderID", orderNumber);
     query.bindValue(":OrderType", "kjt");               // 固定为 kjt
-    query.bindValue(":MerchantOrderID", merchantOrderID.isNull() ? "" : merchantOrderID);   // merchantOrderID, ERP中还未启用 第三方订单号。 由于跨境通的返回信息有空，erp中需要不为空，暂定为 ""
+    query.bindValue(":MerchantOrderID", orderId);
     query.bindValue(":OrderDate", orderDate);
     query.bindValue(":SOStatusCode", sOStatusCode);
 
@@ -561,6 +630,7 @@ void MainWindow::insertOrder2ERPByJson(const QJsonObject &json)
     {
 //        qFatal(query.lastError().text().toStdString().c_str());
         qInfo() << query.lastError().text();
+        _orderCreateKJTToERPData._success = false;
     }
     else
     {
@@ -584,6 +654,7 @@ void MainWindow::insertOrder2ERPByJson(const QJsonObject &json)
                 if (!queryItemInfo.exec())
                 {
                     qInfo() << queryItemInfo.lastError().text();
+                    _orderCreateKJTToERPData._success = false;
                 }
             }
         }
@@ -605,4 +676,41 @@ QDateTime MainWindow::convertKjtTime(const QString &kjtTime)
     /// 跨镜通将会把日期修改为 yyyy-MM-dd hh:mm:ss 形式。到时再修改此处
     qint64 utcTime = kjtTime.mid(kjtTime.indexOf("(") + 1, 13).toLongLong();
     return QDateTime::fromMSecsSinceEpoch(utcTime);      // 订单时间
+}
+
+void MainWindow::setOrderGetFromKJTTime()
+{
+    if (!_orderCreateKJTToERPData._success) return;
+    if (!_orderCreateKJTToERPData._dateStart.isValid() || !_orderCreateKJTToERPData._dateEnd.isValid()) return;
+
+    QSqlQuery query;
+    query.prepare(tr("update 系统参数 set 参数内容Date=:dateStart where 参数分组='跨境通' and 参数名称='订单下载起始时间'"));
+    query.bindValue(":dateStart", _orderCreateKJTToERPData._dateStart);
+    if (!query.exec())
+    {
+        qInfo() << query.lastError().text();
+    }
+
+    query.prepare(tr("update 系统参数 set 参数内容Date=:dateStart where 参数分组='跨境通' and 参数名称='订单下载结束时间'"));
+    query.bindValue(":dateStart", _orderCreateKJTToERPData._dateEnd);
+    if (!query.exec())
+    {
+        qInfo() << query.lastError().text();
+    }
+}
+
+void MainWindow::output(const QString &msg, MsgType type)
+{
+    ui->textEdit->append(msg);
+
+    switch (type) {
+    case MTDebug:
+        qDebug() << msg;
+        break;
+    case MTInfo:
+        qInfo() << msg;
+        break;
+    default:
+        break;
+    }
 }

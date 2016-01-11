@@ -20,12 +20,16 @@ struct ReplyData
     QString _desc;
 };
 
+/// 跨境通订单信息
 struct OrderCreateKJTToERPData
 {
-    ReplyData _replyData;
-    int _total;
-    QList<int> _orderIdList;
-    int _currentIndex;
+    ReplyData _replyData;           // 通用返回信息
+    int _total;                     // 时间区间内新建订单的总数
+    QList<int> _orderIdList;        // 时间区间内新建订单的id列表
+    int _currentIndex;              // 当前处理的订单个数位置
+    bool _success;                  // 是否处理成功（写入到ERP数据库）
+    QDateTime _dateStart;           // 时间区间的开始时间
+    QDateTime _dateEnd;             // 时间区间的结束时间
 };
 
 /// 订单中购买商品信息
@@ -58,8 +62,15 @@ public:
     {
         STNone,
         STProductCreate,
-        STOrderCreateKJTToERP,
-        STOrderInfoBatchGet,
+        STOrderCreateKJTToERP,          // 获取时间区间内的的订单id列表
+        STOrderInfoBatchGet,            // 获取订单详细信息并写入ERP数据库
+    };
+
+    /// 信息类型
+    enum MsgType
+    {
+        MTDebug,
+        MTInfo,
     };
 
 public:
@@ -67,6 +78,7 @@ public:
     ~MainWindow();
 
 private slots:
+    void sStart();
     void on_pushButton_clicked();
 
     void sReplyFinished(QNetworkReply *reply);
@@ -84,7 +96,8 @@ private:
     void parseReply(const QByteArray &data);
     void insertOrder2ERPByJson(const QJsonObject &json);    // 向ERP中插入订单数据
     QDateTime convertKjtTime(const QString &kjtTime);       // 将跨镜通返回的日期类型转换为QDateTime。后面跨境通将修改返回的格式，到时需修改此处
-
+    void setOrderGetFromKJTTime();                          // 设置ERP数据库中的订单下载时间区间（系统参数表）
+    void output(const QString &msg, MsgType type);          // 将信息输出
 private:
     Ui::MainWindow *ui;
 
@@ -98,7 +111,7 @@ private:
 //    QMap<QString, QString> _paramsMap;
     OrderCreateKJTToERPData _orderCreateKJTToERPData;
 
-    OrderCreateKJTToERP *_orderCreateKJTToERP;
+//    OrderCreateKJTToERP *_orderCreateKJTToERP;
 };
 
 #endif // MAINWINDOW_H
