@@ -89,8 +89,8 @@ private slots:
     void on_pushButton_3_clicked();
     void sOrderCreateKJTToERPFinished(bool error, const QString &msg);
 
-private:
-    void synchronizeProductCreate();
+private:    
+    void synchronizeProductCreate();                        // 同步商品: 将ERP商品上传到跨境通
     void orderInfoBatchGet();
 
     void parseReply(const QByteArray &data);

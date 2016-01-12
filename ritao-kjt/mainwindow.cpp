@@ -178,6 +178,13 @@ void MainWindow::synchronizeProductCreate()
 
     if (query.first())
     {
+        /// 商品属于保税仓（p1=1），则上传，否则跳过
+        if (1 != query.value("p1").toInt())
+        {
+            synchronizeProductCreate();
+            return;
+        }
+
         qDebug() << query.value(tr("商品KID")).toInt() << "\t" << query.value(tr("商品名称")).toString();
 
         QString url = "http://preapi.kjt.com/open.api";     //接口测试地址
