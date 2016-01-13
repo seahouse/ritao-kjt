@@ -1,14 +1,18 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+
 #include <QMainWindow>
 #include <QQueue>
 #include <QMap>
 #include <QDateTime>
 
+#include "global.h"
+
 class QNetworkAccessManager;
 class QNetworkReply;
 class OrderCreateKJTToERP;
+class OrderUpload;
 
 namespace Ui {
 class MainWindow;
@@ -61,17 +65,13 @@ public:
     enum SynchronizeType
     {
         STNone,
-        STProductCreate,
+        STProductCreate,                // 获取ERP的商品信息，上传到跨境通
+        STOrderUpload,                  // 上传ERP订单到跨境通
         STOrderCreateKJTToERP,          // 获取时间区间内的的订单id列表
         STOrderInfoBatchGet,            // 获取订单详细信息并写入ERP数据库
     };
 
-    /// 信息类型
-    enum MsgType
-    {
-        MTDebug,
-        MTInfo,
-    };
+
 
 public:
     explicit MainWindow(QWidget *parent = 0);
@@ -89,7 +89,10 @@ private slots:
     void on_pushButton_3_clicked();
     void sOrderCreateKJTToERPFinished(bool error, const QString &msg);
 
-private:    
+    void on_pushButton_4_clicked();
+    void sOrderUploadFinished(bool success, const QString &msg);
+
+private:
     void synchronizeProductCreate();                        // 同步商品: 将ERP商品上传到跨境通
     void orderInfoBatchGet();
 
@@ -111,7 +114,9 @@ private:
 //    QMap<QString, QString> _paramsMap;
     OrderCreateKJTToERPData _orderCreateKJTToERPData;
 
+    OrderUpload *_orderUpload;
 //    OrderCreateKJTToERP *_orderCreateKJTToERP;
+
 };
 
 #endif // MAINWINDOW_H

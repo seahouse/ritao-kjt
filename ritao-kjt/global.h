@@ -18,5 +18,12 @@
 
 extern QMap<QString, QString> g_paramsMap;
 
+/// 信息类型
+enum MsgType
+{
+    MTDebug,
+    MTInfo,
+};
+
 #endif // GLOBAL
 

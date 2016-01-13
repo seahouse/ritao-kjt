@@ -105,6 +105,13 @@
      </layout>
     </item>
     <item>
+     <widget class="QPushButton" name="pushButton_4">
+      <property name="text">
+       <string>上传订单</string>
+      </property>
+     </widget>
+    </item>
+    <item>
      <widget class="QTextEdit" name="textEdit"/>
     </item>
    </layout>

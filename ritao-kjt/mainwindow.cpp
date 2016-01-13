@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 
 #include "ordercreatekjttoerp.h"
+#include "orderupload.h"
 
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
@@ -41,9 +42,13 @@ MainWindow::MainWindow(QWidget *parent) :
 //    _orderCreateKJTToERP = new OrderCreateKJTToERP();
 //    connect(_orderCreateKJTToERP, SIGNAL(finished(bool,QString)), this, SLOT(sOrderCreateKJTToERPFinished(bool, QString)));
 
+    _orderUpload = new OrderUpload;
+    connect(_orderUpload, SIGNAL(finished(bool,QString)), this, SLOT(sOrderUploadFinished(bool, QString &)));
+
     connect(ui->pbnStart, SIGNAL(clicked(bool)), this, SLOT(sStart()));
 
     ui->pushButton->hide();
+    ui->pushButton_2->hide();
 }
 
 MainWindow::~MainWindow()
@@ -136,7 +141,10 @@ void MainWindow::on_pushButton_2_clicked()
         on_pushButton_3_clicked();
     }
     else
-        synchronizeProductCreate();
+    {
+        _timer->start(1000);
+//        synchronizeProductCreate();
+    }
 }
 
 void MainWindow::sTimeout()
@@ -144,6 +152,9 @@ void MainWindow::sTimeout()
     _timer->stop();
 
     switch (_synchronizeType) {
+    case STProductCreate:
+        synchronizeProductCreate();
+        break;
     case STOrderInfoBatchGet:
         orderInfoBatchGet();
         break;
@@ -172,7 +183,8 @@ void MainWindow::synchronizeProductCreate()
     query.bindValue(":id", _currentLocalId);
     if (!query.exec())
     {
-        qFatal(query.lastError().text().toStdString().c_str());
+//        qFatal(query.lastError().text().toStdString().c_str());
+        qInfo() << query.lastError().text();
         return;
     }
 
@@ -181,7 +193,7 @@ void MainWindow::synchronizeProductCreate()
         /// 商品属于保税仓（p1=1），则上传，否则跳过
         if (1 != query.value("p1").toInt())
         {
-            synchronizeProductCreate();
+            _timer->start(1000);
             return;
         }
 
@@ -284,7 +296,7 @@ void MainWindow::orderInfoBatchGet()
 
         /// 执行结束，归为，30分钟后再次执行
         _synchronizeType = STNone;
-        _timer->start(30000);
+        _timer->start(1800000);
 
         return;
     }
@@ -345,7 +357,8 @@ void MainWindow::parseReply(const QByteArray &data)
                              "where 跨境通=1 and 同步指令='新增' and 同步表名='商品' and 同步主键KID=:id "));
             query.bindValue(":id", _currentLocalId);
             query.exec();
-            synchronizeProductCreate();
+            _timer->start(1000);
+//            synchronizeProductCreate();
         }
         break;
     case STOrderCreateKJTToERP:
@@ -720,4 +733,18 @@ void MainWindow::output(const QString &msg, MsgType type)
     default:
         break;
     }
+}
+
+void MainWindow::on_pushButton_4_clicked()
+{
+    _synchronizeType = STOrderUpload;
+//    _productIdQueue.clear();
+
+    _orderUpload->upload();
+
+}
+
+void MainWindow::sOrderUploadFinished(bool success, const QString &msg)
+{
+
 }
