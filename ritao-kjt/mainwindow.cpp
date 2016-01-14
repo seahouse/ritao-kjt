@@ -43,7 +43,7 @@ MainWindow::MainWindow(QWidget *parent) :
 //    connect(_orderCreateKJTToERP, SIGNAL(finished(bool,QString)), this, SLOT(sOrderCreateKJTToERPFinished(bool, QString)));
 
     _orderUpload = new OrderUpload;
-    connect(_orderUpload, SIGNAL(finished(bool,QString)), this, SLOT(sOrderUploadFinished(bool, QString &)));
+    connect(_orderUpload, SIGNAL(finished(bool,QString)), this, SLOT(sOrderUploadFinished(bool, QString)));
 
     connect(ui->pbnStart, SIGNAL(clicked(bool)), this, SLOT(sStart()));
 
@@ -746,5 +746,5 @@ void MainWindow::on_pushButton_4_clicked()
 
 void MainWindow::sOrderUploadFinished(bool success, const QString &msg)
 {
-
+    output(QString::number(success) + ":" + msg);
 }

@@ -29,6 +29,8 @@ OrderUpload::OrderUpload(QObject *parent) : QObject(parent),
 
 void OrderUpload::upload()
 {
+    _orderIdQueue.clear();
+
     /// 获取需要新增到跨境通的商品KID列表
     QSqlQuery query(tr("select 同步主键KID from 数据同步 "
                        "where 跨境通=1 and 跨境通处理=0 and 同步指令='新增' and 同步表名='订单' "
@@ -67,12 +69,12 @@ void OrderUpload::uploadNextOrder()
         return;
     }
 
-    _currentHandlerId = _orderIdQueue.dequeue();
+    _ohData._currentOrderId = _orderIdQueue.dequeue();
 
     QSqlQuery query;
     query.prepare(tr("select * from 订单 "
                      "where 订单KID=:id "));
-    query.bindValue(":id", _currentHandlerId);
+    query.bindValue(":id", _ohData._currentOrderId);
     if (!query.exec())
     {
 //        _optType = OTOrderUploadError;
@@ -85,9 +87,6 @@ void OrderUpload::uploadNextOrder()
 
     if (query.first())
     {
-        QString url = "http://preapi.kjt.com/open.api";     //接口测试地址
-        QString secretkey = "kjt@345";              // 由接口提供方分配给接口调用方的验签密钥
-
         QMap<QString, QString> paramsMap(g_paramsMap);
         paramsMap["method"] = "Order.SOCreate";             // 由接口提供方指定的接口标识符
         paramsMap["timestamp"] = QDateTime::currentDateTime().toString("yyyyMMddhhmmss");       // 调用方时间戳，格式为“4 位年+2 位月+2 位日+2 位小时(24 小时制)+2 位分+2 位秒”
@@ -96,7 +95,8 @@ void OrderUpload::uploadNextOrder()
         QJsonObject json;
 
         json["SaleChannelSysNo"] = 1106;                // 渠道编号
-        json["MerchantOrderID"] = query.value(tr("订单号")).toString();
+        _ohData._currentOrderNumber = query.value(tr("订单号")).toString();
+        json["MerchantOrderID"] = _ohData._currentOrderNumber;
 
         /// 获取订单出库仓库在 Kjt平台的编号
         int warehouseID = 51;
@@ -105,9 +105,53 @@ void OrderUpload::uploadNextOrder()
             warehouseID = queryWarehouseID.value(tr("参数内容")).toString().toInt();
         json["WarehouseID"] = warehouseID;
 
-        QJsonArray jsonArray;
-        jsonArray.append(QJsonValue("345JPA018400002"));
-        json["ProductIDs"] = jsonArray;
+        QJsonObject payInfoObject;              // 订单支付信息
+        payInfoObject["ProductAmount"] = query.value(tr("商品总金额")).toDouble();           // 商品总金额
+        payInfoObject["ShippingAmount"] = query.value(tr("配送费用")).toDouble();           // 运费总金额
+        payInfoObject["TaxAmount"] = query.value(tr("税金")).toDouble();                  // 商品行邮税总金额
+        payInfoObject["CommissionAmount"] = query.value(tr("支付手续费")).toDouble();        // 下单支付产生的手续费
+        /// 支付方式编号  112: 支付宝 114: 财付通 117: 银联支付 118: 微信支付
+        payInfoObject["PayTypeSysNo"] = query.value(tr("支付方式")).toInt();                // 支付方式编号
+        payInfoObject["PaySerialNumber"] = query.value(tr("支付流水号")).toString();         // 支付流水号
+        json["PayInfo"] = payInfoObject;
+
+        QJsonObject shippingInfoObject;         // 订单配送信息
+        shippingInfoObject["ReceiveName"] = query.value(tr("收货人")).toString();          // 收件人姓名
+        shippingInfoObject["ReceivePhone"] = query.value(tr("手机号码")).toString();        // 收件人电话
+        shippingInfoObject["ReceiveAddress"] = query.value(tr("收货地址")).toString();      // 收件人收货地址
+//        shippingInfoObject["ReceiveAreaCode"] = query.value(tr("")).toString();   // 收货地区编号
+//        shippingInfoObject["ShipTypeID"] = query.value(tr("")).toString();
+//        shippingInfoObject["ReceiveAreaName"] = query.value(tr("")).toString();
+        json["ShippingInfo"] = shippingInfoObject;
+
+        QJsonObject authenticationInfoObject;       // 下单用户实名认证信息
+        authenticationInfoObject["Name"] = query.value(tr("个人姓名")).toString();      // 下单用户真实姓名
+//        authenticationInfoObject["IDCardType"] = query.value(tr("")).toString();
+        authenticationInfoObject["IDCardNumber"] = query.value(tr("纳税人识别号")).toString();    // 下单用户证件编号
+        authenticationInfoObject["PhoneNumber"] = query.value(tr("注册电话")).toString();       // 下单用户联系电话
+        authenticationInfoObject["Email"] = query.value(tr("电子邮件")).toString();     // 下单用户电子邮件
+        json["AuthenticationInfo"] = authenticationInfoObject;
+
+        QJsonArray itemListObject;              // 订单中购买商品列表
+        QSqlQuery queryItemList;
+        queryItemList.prepare(tr("select * from 订单商品 where 订单ID=:orderId"));
+        queryItemList.bindValue(":orderId", _ohData._currentOrderId);
+        if (queryItemList.exec())
+        {
+            while (queryItemList.next())
+            {
+                QJsonObject itemObject;
+                itemObject["ProductID"] = query.value(tr("商品编号")).toString();       // KJT 商品 ID
+                itemObject["Quantity"] = query.value(tr("购买数量")).toInt();           // 购买数量
+                itemObject["SalePrice"] = query.value(tr("销售单价")).toDouble();       // 商品价格
+//                itemObject["TaxPrice"] = query.value(tr("")).toDouble();
+
+                itemListObject.append(itemObject);
+            }
+        }
+
+        qInfo() << tr("下单用户真实姓名: ") << query.value(tr("个人姓名")).toString();
+
         QJsonDocument jsonDoc(json);
         qDebug() << jsonDoc.toJson(QJsonDocument::Compact);
 
@@ -122,15 +166,31 @@ void OrderUpload::uploadNextOrder()
             params.append(i.key()).append("=").append(i.value().toLatin1().toPercentEncoding()).append("&");
         }
 
-        params.append(secretkey);
         qDebug() << params;
-        QString sign = QCryptographicHash::hash(params.toLatin1(), QCryptographicHash::Md5).toHex();
+        QString sign = QCryptographicHash::hash(QString(params + kjt_secretkey).toLatin1(), QCryptographicHash::Md5).toHex();
+        params.append("sign=").append(sign);
 
-        url.append("?").append(params).append("&sign=").append(sign);
-
-        qDebug() << url;
-        _manager->get(QNetworkRequest(QUrl(url)));
+        QNetworkRequest req;
+        req.setUrl(QUrl(kjt_url));
+        req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+        _manager->post(req, params.toLatin1());
     }
+}
+
+void OrderUpload::outputSOWarehouse()
+{
+    QString url = "...";
+
+    QMap<QString, QString> paramsMap(g_paramsMap);
+    paramsMap["method"] = "Order.SOOutputWarehouse";                // 由接口提供方指定的接口标识符
+    paramsMap["timestamp"] = QDateTime::currentDateTime().toString("yyyyMMddhhmmss");       // 调用方时间戳，格式为“4 位年+2 位月+2 位日+2 位小时(24 小时制)+2 位分+2 位秒”
+    paramsMap["nonce"] = QString::number(100000 + qrand() % (999999 - 100000)); // QString::number(100000 + qrand() % (999999 - 100000));
+
+    QJsonObject json;
+    json["MerchantOrderID"] = _ohData._currentOrderNumber;      // 商家订单编号
+    /// 订单物流运输公司编号
+    /// 1=顺丰 2=圆通 84=如风达
+//    json["ShipTypeID"] = "";
 
 }
 
@@ -145,15 +205,18 @@ void OrderUpload::sReplyFinished(QNetworkReply *reply)
     QString opt;
     switch (_optType) {
     case OTOrderUploading:
-        opt = tr("新增商品");
+        opt = tr("新增订单");
         if (code == "0")
         {
             /// 记录同步数据，并进行下一个跨境通同步
             QSqlQuery query;
             query.prepare(tr("update 数据同步 set 跨境通处理=1 "
                              "where 跨境通=1 and 同步指令='新增' and 同步表名='订单' and 同步主键KID=:id "));
-            query.bindValue(":id", _currentHandlerId);
+            query.bindValue(":id", _ohData._currentOrderId);
             query.exec();
+
+//            outputSOWarehouse();      // 不需要了
+
             _timer->start(1000);
         }
         break;

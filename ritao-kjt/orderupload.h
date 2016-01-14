@@ -22,6 +22,12 @@ public:
         OTOrderUploadError,             // 订单上传出错
     };
 
+    struct OrderHandlerData
+    {
+        int _currentOrderId;
+        QString _currentOrderNumber;
+    };
+
 public:
     explicit OrderUpload(QObject *parent = 0);
 
@@ -39,15 +45,17 @@ private slots:
 
 private:
     void uploadNextOrder();
+    void outputSOWarehouse();
 
 private:
     QQueue<int> _orderIdQueue;
-    int _currentHandlerId;
+//    int _currentHandlerId;
     QString _msg;
     QTimer *_timer;
     OptType _optType;
 
     QNetworkAccessManager *_manager;
+    OrderHandlerData _ohData;
 };
 
 #endif // ORDERUPLOAD_H

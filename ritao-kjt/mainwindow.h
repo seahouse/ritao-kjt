@@ -100,7 +100,7 @@ private:
     void insertOrder2ERPByJson(const QJsonObject &json);    // 向ERP中插入订单数据
     QDateTime convertKjtTime(const QString &kjtTime);       // 将跨镜通返回的日期类型转换为QDateTime。后面跨境通将修改返回的格式，到时需修改此处
     void setOrderGetFromKJTTime();                          // 设置ERP数据库中的订单下载时间区间（系统参数表）
-    void output(const QString &msg, MsgType type);          // 将信息输出
+    void output(const QString &msg, MsgType type = MTDebug);          // 将信息输出
 private:
     Ui::MainWindow *ui;
 
