@@ -7,7 +7,7 @@
 #ifndef QT_NO_DEBUG
 #define kjt_url "http://preapi.kjt.com/open.api"
 #else
-#define kjt_url = "http://preapi.kjt.com/open.api"
+#define kjt_url "http://preapi.kjt.com/open.api"
 #endif
 
 #define kjt_secretkey "kjt@345"      // 由接口提供方分配给接口调用方的验签密钥

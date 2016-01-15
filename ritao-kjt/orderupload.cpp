@@ -171,7 +171,7 @@ void OrderUpload::uploadNextOrder()
         while (i.hasNext())
         {
             i.next();
-            params.append(i.key()).append("=").append(i.value().toLatin1().toPercentEncoding()).append("&");
+            params.append(i.key()).append("=").append(i.value().toUtf8().toPercentEncoding()).append("&");
         }
 
         qDebug() << params;
