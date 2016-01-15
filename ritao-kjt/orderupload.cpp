@@ -16,6 +16,7 @@
 #include <QUrl>
 #include <QNetworkRequest>
 #include <QNetworkReply>
+#include <QFile>
 
 OrderUpload::OrderUpload(QObject *parent) : QObject(parent),
     _optType(OTNone)
@@ -153,6 +154,13 @@ void OrderUpload::uploadNextOrder()
         qInfo() << tr("下单用户真实姓名: ") << query.value(tr("个人姓名")).toString();
 
         QJsonDocument jsonDoc(json);
+        QFile file("11.txt");
+        if (file.open(QIODevice::WriteOnly))
+        {
+            QTextStream out(&file);
+            out << jsonDoc.toJson(QJsonDocument::Compact);
+            file.close();
+        }
         qDebug() << jsonDoc.toJson(QJsonDocument::Compact);
 
         paramsMap["data"] = jsonDoc.toJson(QJsonDocument::Compact);
@@ -179,7 +187,7 @@ void OrderUpload::uploadNextOrder()
 
 void OrderUpload::outputSOWarehouse()
 {
-    QString url = "...";
+    QString url = "http://localhost:3548/OrderSOOutputWarehouse.aspx";
 
     QMap<QString, QString> paramsMap(g_paramsMap);
     paramsMap["method"] = "Order.SOOutputWarehouse";                // 由接口提供方指定的接口标识符
@@ -187,11 +195,32 @@ void OrderUpload::outputSOWarehouse()
     paramsMap["nonce"] = QString::number(100000 + qrand() % (999999 - 100000)); // QString::number(100000 + qrand() % (999999 - 100000));
 
     QJsonObject json;
-    json["MerchantOrderID"] = _ohData._currentOrderNumber;      // 商家订单编号
+    json["MerchantOrderID"] = "1234";      // 商家订单编号
     /// 订单物流运输公司编号
     /// 1=顺丰 2=圆通 84=如风达
-//    json["ShipTypeID"] = "";
+    json["ShipTypeID"] = 1;
+    json["TrackingNumber"] = "123456";
+    json["CommitTime"] = "20151117020101";
 
+    QJsonDocument jsonDoc(json);
+    paramsMap["data"] = jsonDoc.toJson(QJsonDocument::Compact);
+
+    QString params;
+    QMapIterator<QString, QString> i(paramsMap);
+    while (i.hasNext())
+    {
+        i.next();
+        params.append(i.key()).append("=").append(i.value().toLatin1().toPercentEncoding()).append("&");
+    }
+
+    qDebug() << params;
+    QString sign = QCryptographicHash::hash(QString(params + kjt_secretkey).toLatin1(), QCryptographicHash::Md5).toHex();
+    params.append("sign=").append(sign);
+
+    QNetworkRequest req;
+    req.setUrl(QUrl(url));
+    req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+    _manager->post(req, params.toLatin1());
 }
 
 void OrderUpload::sReplyFinished(QNetworkReply *reply)

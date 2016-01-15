@@ -32,6 +32,7 @@ public:
     explicit OrderUpload(QObject *parent = 0);
 
     void upload();
+    void outputSOWarehouse();
 
 signals:
     void finished(bool success, const QString &msg);
@@ -45,7 +46,6 @@ private slots:
 
 private:
     void uploadNextOrder();
-    void outputSOWarehouse();
 
 private:
     QQueue<int> _orderIdQueue;

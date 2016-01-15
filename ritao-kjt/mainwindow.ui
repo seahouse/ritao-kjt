@@ -105,11 +105,35 @@
      </layout>
     </item>
     <item>
-     <widget class="QPushButton" name="pushButton_4">
-      <property name="text">
-       <string>上传订单</string>
-      </property>
-     </widget>
+     <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <item>
+       <widget class="QPushButton" name="pushButton_4">
+        <property name="text">
+         <string>上传订单</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_5">
+        <property name="text">
+         <string>测试入库</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
     </item>
     <item>
      <widget class="QTextEdit" name="textEdit"/>

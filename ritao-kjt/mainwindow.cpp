@@ -748,3 +748,9 @@ void MainWindow::sOrderUploadFinished(bool success, const QString &msg)
 {
     output(QString::number(success) + ":" + msg);
 }
+
+void MainWindow::on_pushButton_5_clicked()
+{
+    _synchronizeType = STOrderUpload;
+    _orderUpload->outputSOWarehouse();
+}
