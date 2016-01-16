@@ -6,6 +6,8 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Text;
 using Newtonsoft.Json.Linq;
+using System.Data;
+using System.Data.SqlClient;
 
 namespace ritao_kjt_web
 {
@@ -29,7 +31,7 @@ namespace ritao_kjt_web
 
             int index = str.IndexOf("&");
             string[] arr = { };
-            if (index != -1)        // 参数大于等于1个
+            if (index != -1)        // 参数大于1个
             {
                 arr = str.Split('&');
                 for (int i = 0; i < arr.Length; i++)
@@ -50,7 +52,28 @@ namespace ritao_kjt_web
                         string trackingNumber = (string)obj["TrackingNumber"];
 
                         // 写入数据库
+                        SqlConnection con = new SqlConnection();
+                        con.ConnectionString = "server=localhost;database=dayamoy;user=sa;pwd=liangyi0328";
+                        con.Open();
+
+                        SqlCommand com = new SqlCommand();
+                        com.Connection = con;
+                        com.CommandType = CommandType.Text;
+                        com.CommandText = "update 订单 set 发货状态=1 where 订单号='" + merchantOrderID + "'";
+                        SqlDataReader dr = com.ExecuteReader();
+                        dr.Close();
+                        con.Close();
                     }
+                }
+            }
+            else        // 参数少于或等于1项
+            {
+                int equalindex = str.IndexOf('=');
+                if (equalindex != -1)
+                {
+                    string paramN = str.Substring(0, equalindex);
+                    string paramV = str.Substring(equalindex + 1);
+                    // ....
                 }
             }
         }

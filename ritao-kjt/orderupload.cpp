@@ -195,7 +195,7 @@ void OrderUpload::outputSOWarehouse()
     paramsMap["nonce"] = QString::number(100000 + qrand() % (999999 - 100000)); // QString::number(100000 + qrand() % (999999 - 100000));
 
     QJsonObject json;
-    json["MerchantOrderID"] = "1234";      // 商家订单编号
+    json["MerchantOrderID"] = "018524818500";      // 商家订单编号
     /// 订单物流运输公司编号
     /// 1=顺丰 2=圆通 84=如风达
     json["ShipTypeID"] = 1;
