@@ -107,6 +107,13 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_3">
       <item>
+       <widget class="QPushButton" name="pushButton_6">
+        <property name="text">
+         <string>上传商品</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="pushButton_4">
         <property name="text">
          <string>上传订单</string>

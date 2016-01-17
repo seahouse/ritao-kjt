@@ -3,6 +3,7 @@
 
 #include "ordercreatekjttoerp.h"
 #include "orderupload.h"
+#include "productupload.h"
 
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
@@ -45,9 +46,12 @@ MainWindow::MainWindow(QWidget *parent) :
     _orderUpload = new OrderUpload;
     connect(_orderUpload, SIGNAL(finished(bool,QString)), this, SLOT(sOrderUploadFinished(bool, QString)));
 
+    _productUpload = new ProductUpload;
+    connect(_productUpload, SIGNAL(finished(bool,QString)), this, SLOT(sProductUploadFinished(bool, QString)));
+
     connect(ui->pbnStart, SIGNAL(clicked(bool)), this, SLOT(sStart()));
 
-    ui->pushButton->hide();
+//    ui->pushButton->hide();
     ui->pushButton_2->hide();
 }
 
@@ -593,14 +597,14 @@ void MainWindow::insertOrder2ERPByJson(const QJsonObject &json)
                      "贸易类型, 审核日期, 发货日期, 商品总金额, 配送费用, "
                      "税金, 支付手续费, 支付方式, 支付流水号, 付款状态, "
                      "收货人, 手机号码, 收货地址, 邮政编码, 发件人姓名, "
-                     "发件人电话, 发件人地址, 发件地邮编, 运单号, 个人姓名, "
+                     "发件人电话, 发件人地址, 发件地邮编, 注册地址, 运单号, 个人姓名, "
                      "纳税人识别号, 注册电话, 电子邮件, 获取时间 "
                      ") values ("
                      ":OrderID, :OrderType, :MerchantOrderID, :OrderDate, :SOStatusCode, "
                      ":TradeType, :AuditTime, :SOOutStockTime, :ProductAmount, :ShippingAmount, "
                      ":TaxAmount, :CommissionAmount, :PayTypeSysNo, :PaySerialNumber, :PayStatusCode, "
                      ":ReceiveName, :ReceivePhone, :ReceiveAddress, :ReceiveZip, :SenderName, "
-                     ":SenderTel, :SenderAddr, :SenderZip, :TrackingNumber, :Name, "
+                     ":SenderTel, :SenderAddr, :SenderZip, :ReceiveAreaName, :TrackingNumber, :Name, "
                      ":IDCardNumber, :PhoneNumber, :Email, :GetTime "
                      ")"));
 
@@ -632,8 +636,9 @@ void MainWindow::insertOrder2ERPByJson(const QJsonObject &json)
 
     query.bindValue(":ReceiveName", receiveName);
     query.bindValue(":ReceivePhone", receivePhone.isNull() ? "" : receivePhone);
-    query.bindValue(":ReceiveAddress", receiveAreaName + receiveAddress);
+    query.bindValue(":ReceiveAddress", receiveAddress);
     query.bindValue(":ReceiveZip", receiveZip);
+    query.bindValue(":ReceiveAreaName", receiveAreaName);
     query.bindValue(":SenderName", senderName.isNull() ? "" : senderName);
 
     query.bindValue(":SenderTel", senderTel.isNull() ? "" : senderTel);
@@ -661,15 +666,18 @@ void MainWindow::insertOrder2ERPByJson(const QJsonObject &json)
             QSqlQuery queryItemInfo;
             foreach (SOItemInfo sOitemInfo, sOItemInfoList) {
                 queryItemInfo.prepare(tr("insert into 订单商品 ("
-                                         "订单id, 商品名称, 商品编号, 购买数量, 销售单价 "
+                                         "订单id, 商品名称, 商品编号, 购买数量, 销售单价, "
+                                         "税金 "
                                          ") values ("
-                                         ":OrderId, :ProductName, :ProductID, :Quantity, :ProductPrice"
+                                         ":OrderId, :ProductName, :ProductID, :Quantity, :ProductPrice, "
+                                         ":TaxPrice "
                                          ")"));
                 queryItemInfo.bindValue(":OrderId", parentId);
                 queryItemInfo.bindValue(":ProductName", sOitemInfo._productName.isNull() ? "" : sOitemInfo._productName);
                 queryItemInfo.bindValue(":ProductID", sOitemInfo._productId.isNull() ? "" : sOitemInfo._productId);
                 queryItemInfo.bindValue(":Quantity", sOitemInfo._quantity);
                 queryItemInfo.bindValue(":ProductPrice", sOitemInfo._productPrice);
+                queryItemInfo.bindValue(":TaxPrice", sOitemInfo._taxPrice);
 
                 if (!queryItemInfo.exec())
                 {
@@ -753,4 +761,15 @@ void MainWindow::on_pushButton_5_clicked()
 {
     _synchronizeType = STOrderUpload;
     _orderUpload->outputSOWarehouse();
+}
+
+void MainWindow::on_pushButton_6_clicked()
+{
+    _synchronizeType = STProductUpload;
+    _productUpload->upload();
+}
+
+void MainWindow::sProductUploadFinished(bool success, const QString &msg)
+{
+    output(QString::number(success) + ":" + msg);
 }

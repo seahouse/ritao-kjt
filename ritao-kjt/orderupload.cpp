@@ -122,12 +122,12 @@ void OrderUpload::uploadNextOrder()
         shippingInfoObject["ReceiveAddress"] = query.value(tr("收货地址")).toString();      // 收件人收货地址
 //        shippingInfoObject["ReceiveAreaCode"] = query.value(tr("")).toString();   // 收货地区编号
 //        shippingInfoObject["ShipTypeID"] = query.value(tr("")).toString();
-//        shippingInfoObject["ReceiveAreaName"] = query.value(tr("")).toString();
+        shippingInfoObject["ReceiveAreaName"] = query.value(tr("注册地址")).toString();
         json["ShippingInfo"] = shippingInfoObject;
 
         QJsonObject authenticationInfoObject;       // 下单用户实名认证信息
         authenticationInfoObject["Name"] = query.value(tr("个人姓名")).toString();      // 下单用户真实姓名
-//        authenticationInfoObject["IDCardType"] = query.value(tr("")).toString();
+        authenticationInfoObject["IDCardType"] = query.value(tr("发票类型")).toString();
         authenticationInfoObject["IDCardNumber"] = query.value(tr("纳税人识别号")).toString();    // 下单用户证件编号
         authenticationInfoObject["PhoneNumber"] = query.value(tr("注册电话")).toString();       // 下单用户联系电话
         authenticationInfoObject["Email"] = query.value(tr("电子邮件")).toString();     // 下单用户电子邮件
@@ -142,14 +142,15 @@ void OrderUpload::uploadNextOrder()
             while (queryItemList.next())
             {
                 QJsonObject itemObject;
-                itemObject["ProductID"] = query.value(tr("商品编号")).toString();       // KJT 商品 ID
-                itemObject["Quantity"] = query.value(tr("购买数量")).toInt();           // 购买数量
-                itemObject["SalePrice"] = query.value(tr("销售单价")).toDouble();       // 商品价格
-//                itemObject["TaxPrice"] = query.value(tr("")).toDouble();
+                itemObject["ProductID"] = queryItemList.value(tr("商品编号")).toString();       // KJT 商品 ID
+                itemObject["Quantity"] = queryItemList.value(tr("购买数量")).toInt();           // 购买数量
+                itemObject["SalePrice"] = queryItemList.value(tr("销售单价")).toDouble();       // 商品价格
+                itemObject["TaxPrice"] = queryItemList.value(tr("税金")).toDouble();
 
                 itemListObject.append(itemObject);
             }
         }
+        json["ItemList"] = itemListObject;
 
         qInfo() << tr("下单用户真实姓名: ") << query.value(tr("个人姓名")).toString();
 

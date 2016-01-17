@@ -18,13 +18,15 @@ SOURCES += main.cpp\
     ordercreatekjttoerp.cpp \
     global.cpp \
     rnetworkaccessmanager.cpp \
-    orderupload.cpp
+    orderupload.cpp \
+    productupload.cpp
 
 HEADERS  += mainwindow.h \
     connection.h \
     global.h \
     ordercreatekjttoerp.h \
     rnetworkaccessmanager.h \
-    orderupload.h
+    orderupload.h \
+    productupload.h
 
 FORMS    += mainwindow.ui
