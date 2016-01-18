@@ -121,6 +121,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="pushButton_7">
+        <property name="text">
+         <string>下载订单</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="pushButton_5">
         <property name="text">
          <string>测试入库</string>

@@ -49,7 +49,6 @@ private:
 
 private:
     QQueue<int> _orderIdQueue;
-//    int _currentHandlerId;
     QString _msg;
     QTimer *_timer;
     OptType _optType;

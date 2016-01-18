@@ -99,6 +99,8 @@ private slots:
     void on_pushButton_6_clicked();
     void sProductUploadFinished(bool success, const QString &msg);
 
+    void on_pushButton_7_clicked();
+
 private:
     void synchronizeProductCreate();                        // 同步商品: 将ERP商品上传到跨境通
     void orderInfoBatchGet();

@@ -773,3 +773,8 @@ void MainWindow::sProductUploadFinished(bool success, const QString &msg)
 {
     output(QString::number(success) + ":" + msg);
 }
+
+void MainWindow::on_pushButton_7_clicked()
+{
+
+}

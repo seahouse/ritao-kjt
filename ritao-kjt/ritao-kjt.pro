@@ -19,7 +19,8 @@ SOURCES += main.cpp\
     global.cpp \
     rnetworkaccessmanager.cpp \
     orderupload.cpp \
-    productupload.cpp
+    productupload.cpp \
+    orderdownload.cpp
 
 HEADERS  += mainwindow.h \
     connection.h \
@@ -27,6 +28,7 @@ HEADERS  += mainwindow.h \
     ordercreatekjttoerp.h \
     rnetworkaccessmanager.h \
     orderupload.h \
-    productupload.h
+    productupload.h \
+    orderdownload.h
 
 FORMS    += mainwindow.ui
