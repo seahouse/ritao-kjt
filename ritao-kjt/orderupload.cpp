@@ -238,6 +238,9 @@ void OrderUpload::sReplyFinished(QNetworkReply *reply)
         opt = tr("新增订单");
         if (code == "0")
         {
+            /// 将跨境通的ProductID 存入商品表
+            ///
+
             /// 记录同步数据，并进行下一个跨境通同步
             QSqlQuery query;
             query.prepare(tr("update 数据同步 set 跨境通处理=1 "

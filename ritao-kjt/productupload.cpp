@@ -99,7 +99,7 @@ void ProductUpload::uploadNextProduct()
 
         QJsonObject json;
         json["IsSettledDown"] = query.value(tr("入住商品")).toInt();                // 是否为入驻商品。0 = 否 1 = 是
-        json["MerchantProductID"] = query.value(tr("商品KID")).toString();         // 商户商品 ID
+        json["MerchantProductID"] = QString::number(query.value(tr("商品KID")).toInt());         // 商户商品 ID
         json["ProductName"] = query.value(tr("商品名称")).toString();               // 商品名称
         json["BriefName"] = "HW";   // query.value(tr("品名简称")).toString();                 // 商品简称  //
         json["BrandCode"] = "950"; // query.value(tr("商品品牌ID")).toString();     // 品牌编号 code
@@ -107,8 +107,10 @@ void ProductUpload::uploadNextProduct()
         json["ProductTradeType"] = query.value(tr("贸易类型")).toInt();             // 贸易类型  0 = 直邮 1 = 自贸
         json["OriginCode"] = "JP"; // query.value(tr("产地")).toString();                   // 产地，两位字母     //
         json["ProductDesc"] = query.value(tr("商品简述")).toString();               // 商品简述
+        json["ProductDescLong"] = query.value(tr("商品详细描述")).toString();             // 商品详述
 
         QJsonObject productPriceInfoJsonObject;                     // 商品价格信息
+        productPriceInfoJsonObject["BasicPrice"] = query.value(tr("市场价")).toDouble();
         productPriceInfoJsonObject["CurrentPrice"] = query.value(tr("销售价")).toDouble();
         json["ProductPriceInfo"] = productPriceInfoJsonObject;
 
@@ -137,7 +139,8 @@ void ProductUpload::uploadNextProduct()
         productMaintainInfoJsonObject["Height"] = query.value(tr("高度")).toDouble();
         json["ProductMaintainInfo"] = productMaintainInfoJsonObject;
 
-//        qInfo() << tr("下单用户真实姓名: ") << query.value(tr("个人姓名")).toString();
+        qInfo() << tr("MerchantProductID: ") << QString::number(query.value(tr("商品KID")).toInt());
+        qInfo() << tr("ProductName: ") << query.value(tr("商品名称")).toString();
 
         QJsonDocument jsonDoc(json);
         QFile file("11.txt");
@@ -191,8 +194,6 @@ void ProductUpload::sReplyFinished(QNetworkReply *reply)
                              "where 跨境通=1 and 同步指令='新增' and 同步表名='商品' and 同步主键KID=:id "));
             query.bindValue(":id", _ohData._currentProductId);
             query.exec();
-
-//            outputSOWarehouse();      // 不需要了
 
             _timer->start(1000);
         }
