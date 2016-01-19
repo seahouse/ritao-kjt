@@ -188,12 +188,22 @@ void ProductUpload::sReplyFinished(QNetworkReply *reply)
         opt = tr("新增商品");
         if (code == "0")
         {
-            /// 记录同步数据，并进行下一个跨境通同步
             QSqlQuery query;
+            /// 将跨境通的ProductID 存入商品表
+            QString productID = json.value("ProductID").toString();
+            query.prepare(tr("update 商品 set p28=:ProductID "
+                             "where 商品KID=:id "));
+            query.bindValue(":ProductID", productID);
+            query.bindValue(":id", _ohData._currentProductId);
+            if (query.exec())
+                qInfo() << tr("更新商品的商家ID: ") << query.lastError().text();
+
+            /// 记录同步数据，并进行下一个跨境通同步
             query.prepare(tr("update 数据同步 set 跨境通处理=1 "
                              "where 跨境通=1 and 同步指令='新增' and 同步表名='商品' and 同步主键KID=:id "));
             query.bindValue(":id", _ohData._currentProductId);
-            query.exec();
+            if (query.exec())
+                qInfo() << tr("更新数据同步的跨境通商品新增处理: ") << query.lastError().text();
 
             _timer->start(1000);
         }

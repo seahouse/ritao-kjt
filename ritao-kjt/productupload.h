@@ -24,7 +24,7 @@ public:
 
     struct OrderHandlerData
     {
-        int _currentProductId;
+        int _currentProductId;          // 商品KID
 //        QString _currentOrderNumber;
     };
 

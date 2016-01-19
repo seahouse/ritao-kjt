@@ -142,7 +142,18 @@ void OrderUpload::uploadNextOrder()
             while (queryItemList.next())
             {
                 QJsonObject itemObject;
-                itemObject["ProductID"] = queryItemList.value(tr("商品编号")).toString();       // KJT 商品 ID
+
+                /// 获取商品中的 KJT 商品 ID,
+                int productIDERP = queryItemList.value(tr("商品ID")).toInt();
+                QString productIDKJT;
+                QSqlQuery queryItem;
+                queryItem.prepare(tr("select * from 商品 where 商品KID=:productIDERP "));
+                queryItem.bindValue(":productIDERP", productIDERP);
+                if (queryItem.exec())
+                    if (queryItem.first())
+                        productIDKJT = queryItem.value("p28").toString();
+
+                itemObject["ProductID"] = productIDKJT;                                       // KJT 商品 ID
                 itemObject["Quantity"] = queryItemList.value(tr("购买数量")).toInt();           // 购买数量
                 itemObject["SalePrice"] = queryItemList.value(tr("销售单价")).toDouble();       // 商品价格
                 itemObject["TaxPrice"] = queryItemList.value(tr("税金")).toDouble();
@@ -238,8 +249,6 @@ void OrderUpload::sReplyFinished(QNetworkReply *reply)
         opt = tr("新增订单");
         if (code == "0")
         {
-            /// 将跨境通的ProductID 存入商品表
-            ///
 
             /// 记录同步数据，并进行下一个跨境通同步
             QSqlQuery query;
