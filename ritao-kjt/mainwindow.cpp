@@ -3,6 +3,7 @@
 
 #include "ordercreatekjttoerp.h"
 #include "orderupload.h"
+#include "orderdownload.h"
 #include "productupload.h"
 
 #include <QNetworkAccessManager>
@@ -45,6 +46,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     _orderUpload = new OrderUpload;
     connect(_orderUpload, SIGNAL(finished(bool,QString)), this, SLOT(sOrderUploadFinished(bool, QString)));
+
+    _orderDownload = new OrderDownload;
+    connect(_orderDownload, SIGNAL(finished(bool,QString)), this, SLOT(sOrderDownloadFinished(bool, QString)));
 
     _productUpload = new ProductUpload;
     connect(_productUpload, SIGNAL(finished(bool,QString)), this, SLOT(sProductUploadFinished(bool, QString)));
@@ -776,5 +780,11 @@ void MainWindow::sProductUploadFinished(bool success, const QString &msg)
 
 void MainWindow::on_pushButton_7_clicked()
 {
+    _synchronizeType = STOrderDownload;
+    _orderDownload->download();
+}
 
+void MainWindow::sOrderDownloadFinished(bool success, const QString &msg)
+{
+    output(QString::number(success) + ":" + msg);
 }

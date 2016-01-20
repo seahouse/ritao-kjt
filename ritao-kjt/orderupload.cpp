@@ -120,8 +120,14 @@ void OrderUpload::uploadNextOrder()
         shippingInfoObject["ReceiveName"] = query.value(tr("收货人")).toString();          // 收件人姓名
         shippingInfoObject["ReceivePhone"] = query.value(tr("手机号码")).toString();        // 收件人电话
         shippingInfoObject["ReceiveAddress"] = query.value(tr("收货地址")).toString();      // 收件人收货地址
-//        shippingInfoObject["ReceiveAreaCode"] = query.value(tr("")).toString();   // 收货地区编号
-//        shippingInfoObject["ShipTypeID"] = query.value(tr("")).toString();
+        /// 根据“区域ID”查找“区域”中的“地区编码”
+        /// 地区编码参考： http://www.stats.gov.cn/tjsj/tjbz/xzqhdm/201401/t20140116_501070.html
+        QString receiveAreaCode;
+        QSqlQuery queryAreaCode(tr("select * from 区域 where 区域KID=") + QString::number(query.value(tr("收货区域ID")).toInt()));
+        if (queryAreaCode.first())
+            receiveAreaCode = queryAreaCode.value(tr("地区编码")).toString();
+        shippingInfoObject["ReceiveAreaCode"] = receiveAreaCode;   // query.value(tr("")).toString();   // 收货地区编号
+        shippingInfoObject["ShipTypeID"] = query.value(tr("物流公司")).toString();
         shippingInfoObject["ReceiveAreaName"] = query.value(tr("注册地址")).toString();
         json["ShippingInfo"] = shippingInfoObject;
 
