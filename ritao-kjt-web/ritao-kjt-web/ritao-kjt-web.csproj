@@ -34,7 +34,7 @@
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Newtonsoft.Json">
-      <HintPath>..\..\..\..\Json80r2\Bin\Net40\Newtonsoft.Json.dll</HintPath>
+      <HintPath>thirdparty\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />

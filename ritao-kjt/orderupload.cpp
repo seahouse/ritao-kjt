@@ -255,15 +255,32 @@ void OrderUpload::sReplyFinished(QNetworkReply *reply)
         opt = tr("新增订单");
         if (code == "0")
         {
+            QSqlQuery query;
+
+            QJsonObject data = json.value("Data").toObject();
+            /// 将跨境通的“订单号”存入订单表
+            int orderIdKJT = data.value("SOSysNo").toInt();
+            query.prepare(tr("update 订单 set 第三方订单号=:orderIdKJT "
+                             "where 订单KID=:id "));
+            query.bindValue(":orderIdKJT", QString::number(orderIdKJT));
+            query.bindValue(":id", _ohData._currentOrderId);
+            if (!query.exec())
+                qInfo() << tr("更新订单的第三方订单号: ") << query.lastError().text();
+            /// 将跨境通的“Kjt计算的运费金额”存入订单表
+            double shippingAmount = data.value("ShippingAmount").toDouble();
+            query.prepare(tr("update 订单 set 订单保价=:ShippingAmount "
+                             "where 订单KID=:id "));
+            query.bindValue(":ShippingAmount", shippingAmount);
+            query.bindValue(":id", _ohData._currentOrderId);
+            if (!query.exec())
+                qInfo() << tr("更新订单的Kjt计算的运费金额到订单保价: ") << query.lastError().text();
 
             /// 记录同步数据，并进行下一个跨境通同步
-            QSqlQuery query;
             query.prepare(tr("update 数据同步 set 跨境通处理=1 "
                              "where 跨境通=1 and 同步指令='新增' and 同步表名='订单' and 同步主键KID=:id "));
             query.bindValue(":id", _ohData._currentOrderId);
-            query.exec();
-
-//            outputSOWarehouse();      // 不需要了
+            if (!query.exec())
+                qInfo() << tr("更新数据同步的跨境通处理: ") << query.lastError().text();
 
             _timer->start(1000);
         }

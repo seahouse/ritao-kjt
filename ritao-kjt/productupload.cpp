@@ -195,14 +195,14 @@ void ProductUpload::sReplyFinished(QNetworkReply *reply)
                              "where 商品KID=:id "));
             query.bindValue(":ProductID", productID);
             query.bindValue(":id", _ohData._currentProductId);
-            if (query.exec())
+            if (!query.exec())
                 qInfo() << tr("更新商品的商家ID: ") << query.lastError().text();
 
             /// 记录同步数据，并进行下一个跨境通同步
             query.prepare(tr("update 数据同步 set 跨境通处理=1 "
                              "where 跨境通=1 and 同步指令='新增' and 同步表名='商品' and 同步主键KID=:id "));
             query.bindValue(":id", _ohData._currentProductId);
-            if (query.exec())
+            if (!query.exec())
                 qInfo() << tr("更新数据同步的跨境通商品新增处理: ") << query.lastError().text();
 
             _timer->start(1000);
