@@ -56,6 +56,9 @@ void OrderUpload::sTimeout()
     case OTOrderUploadEnd:
         emit finished(true, tr("上传订单结束。"));
         break;
+    case OTOrderUploadError:
+        emit finished(false, _msg);
+        break;
     default:
         break;
     }
@@ -282,6 +285,12 @@ void OrderUpload::sReplyFinished(QNetworkReply *reply)
             if (!query.exec())
                 qInfo() << tr("更新数据同步的跨境通处理: ") << query.lastError().text();
 
+            _timer->start(1000);
+        }
+        else
+        {
+            _optType = OTOrderUploadError;
+            _msg = tr("上传订单错误：") + desc;
             _timer->start(1000);
         }
         break;

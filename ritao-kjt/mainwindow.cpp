@@ -55,8 +55,16 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->pbnStart, SIGNAL(clicked(bool)), this, SLOT(sStart()));
 
-//    ui->pushButton->hide();
+    ui->pushButton->hide();
     ui->pushButton_2->hide();
+    ui->pushButton_3->hide();
+    ui->dateTimeEdit->hide();
+    ui->dateTimeEdit_2->hide();
+
+    ui->pushButton_6->hide();
+    ui->pushButton_4->hide();
+    ui->pushButton_7->hide();
+    ui->pushButton_5->hide();
 }
 
 MainWindow::~MainWindow()
@@ -66,7 +74,12 @@ MainWindow::~MainWindow()
 
 void MainWindow::sStart()
 {
-    on_pushButton_2_clicked();
+//    on_pushButton_2_clicked();
+
+    ui->pbnStart->setEnabled(false);
+
+    _synchronizeType = STProductUpload;
+    _timer->start(1000);
 }
 
 void MainWindow::on_pushButton_clicked()
@@ -160,6 +173,15 @@ void MainWindow::sTimeout()
     _timer->stop();
 
     switch (_synchronizeType) {
+    case STProductUpload:
+        on_pushButton_6_clicked();
+        break;
+    case STOrderUpload:
+        on_pushButton_4_clicked();
+        break;
+    case STOrderDownload:
+        on_pushButton_7_clicked();
+        break;
     case STProductCreate:
         synchronizeProductCreate();
         break;
@@ -759,6 +781,9 @@ void MainWindow::on_pushButton_4_clicked()
 void MainWindow::sOrderUploadFinished(bool success, const QString &msg)
 {
     output(QString::number(success) + ":" + msg);
+
+    _synchronizeType = STOrderDownload;
+    _timer->start(1000);
 }
 
 void MainWindow::on_pushButton_5_clicked()
@@ -776,6 +801,9 @@ void MainWindow::on_pushButton_6_clicked()
 void MainWindow::sProductUploadFinished(bool success, const QString &msg)
 {
     output(QString::number(success) + ":" + msg);
+
+    _synchronizeType = STOrderUpload;
+    _timer->start(1000);
 }
 
 void MainWindow::on_pushButton_7_clicked()
@@ -787,4 +815,8 @@ void MainWindow::on_pushButton_7_clicked()
 void MainWindow::sOrderDownloadFinished(bool success, const QString &msg)
 {
     output(QString::number(success) + ":" + msg);
+
+    _synchronizeType = STNone;
+    ui->pbnStart->setEnabled(true);
+    _timer->start(1800000);     // 30分钟
 }

@@ -349,11 +349,13 @@ void OrderDownload::insertOrder2ERPByJson(const QJsonObject &json)
         logInfoList.append(logInfo);
     }
 
-    qDebug() << orderId << merchantOrderID << paySerialNumber << qrand();
+    qDebug() << orderId << merchantOrderID << "ReceiveAreaName: " << receiveAreaName;
 //    if (10022053 != orderId) return;
 
     /// 如果“第三方商家订单号”这个字段不为空，则表示是其他平台上传的订单，此处不做下载处理
     if (!merchantOrderID.isNull()) return;
+    /// 仅下载付款后，待出库的订单
+    if (sOStatusCode != 1) return;
 
     QSqlQuery query;
     query.prepare(tr("select * from 订单 where 订单类型=:OrderType and 第三方订单号=:MerchantOrderID"));
@@ -417,7 +419,7 @@ void OrderDownload::insertOrder2ERPByJson(const QJsonObject &json)
     query.bindValue(":ReceivePhone", receivePhone.isNull() ? "" : receivePhone);
     query.bindValue(":ReceiveAddress", receiveAddress);
     query.bindValue(":ReceiveZip", receiveZip);
-    query.bindValue(":ReceiveAreaName", receiveAreaName);
+    query.bindValue(":ReceiveAreaName", receiveAreaName.isNull() ? "" : receiveAreaName);
     query.bindValue(":SenderName", senderName.isNull() ? "" : senderName);
 
     query.bindValue(":SenderTel", senderTel.isNull() ? "" : senderTel);
