@@ -25,5 +25,9 @@ enum MsgType
     MTInfo,
 };
 
+/// 将转换后的code，继续替换%字符
+void urlencodePercentConvert(QString &str);
+//extern QByteArray toPercentEncoding_exclude;
+
 #endif // GLOBAL
 

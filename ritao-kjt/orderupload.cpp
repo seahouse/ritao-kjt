@@ -130,8 +130,8 @@ void OrderUpload::uploadNextOrder()
         if (queryAreaCode.first())
             receiveAreaCode = queryAreaCode.value(tr("地区编码")).toString();
         shippingInfoObject["ReceiveAreaCode"] = receiveAreaCode;   // query.value(tr("")).toString();   // 收货地区编号
-        shippingInfoObject["ShipTypeID"] = query.value(tr("物流公司")).toString();
-        shippingInfoObject["ReceiveAreaName"] = query.value(tr("注册地址")).toString();
+        shippingInfoObject["ShipTypeID"] = query.value(tr("物流公司")).toString();              // 订单物流运输公司编号
+        shippingInfoObject["ReceiveAreaName"] = query.value(tr("注册地址")).toString();         // 收件省市区名称
         json["ShippingInfo"] = shippingInfoObject;
 
         QJsonObject authenticationInfoObject;       // 下单用户实名认证信息
@@ -175,13 +175,13 @@ void OrderUpload::uploadNextOrder()
         qInfo() << tr("下单用户真实姓名: ") << query.value(tr("个人姓名")).toString();
 
         QJsonDocument jsonDoc(json);
-        QFile file("11.txt");
-        if (file.open(QIODevice::WriteOnly))
-        {
-            QTextStream out(&file);
-            out << jsonDoc.toJson(QJsonDocument::Compact);
-            file.close();
-        }
+//        QFile file("11.txt");
+//        if (file.open(QIODevice::WriteOnly))
+//        {
+//            QTextStream out(&file);
+//            out << jsonDoc.toJson(QJsonDocument::Compact);
+//            file.close();
+//        }
         qDebug() << jsonDoc.toJson(QJsonDocument::Compact);
 
         paramsMap["data"] = jsonDoc.toJson(QJsonDocument::Compact);
@@ -195,6 +195,7 @@ void OrderUpload::uploadNextOrder()
             params.append(i.key()).append("=").append(i.value().toUtf8().toPercentEncoding()).append("&");
         }
 
+        urlencodePercentConvert(params);
         qDebug() << params;
         QString sign = QCryptographicHash::hash(QString(params + kjt_secretkey).toLatin1(), QCryptographicHash::Md5).toHex();
         params.append("sign=").append(sign);

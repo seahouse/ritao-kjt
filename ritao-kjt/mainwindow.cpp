@@ -282,13 +282,13 @@ void MainWindow::synchronizeProductCreate()
 
 
         QJsonDocument jsonDoc(json);
-        QFile file("11.txt");
-        if (file.open(QIODevice::WriteOnly))
-        {
-            QTextStream out(&file);
-            out << jsonDoc.toJson(QJsonDocument::Compact);
-            file.close();
-        }
+//        QFile file("11.txt");
+//        if (file.open(QIODevice::WriteOnly))
+//        {
+//            QTextStream out(&file);
+//            out << jsonDoc.toJson(QJsonDocument::Compact);
+//            file.close();
+//        }
         qDebug() << jsonDoc.toJson(QJsonDocument::Compact);
 
         paramsMap["data"] = jsonDoc.toJson(QJsonDocument::Compact);
@@ -358,7 +358,7 @@ void MainWindow::orderInfoBatchGet()
     }
 
     params.append(kjt_secretkey);
-    params.replace("%20", "+");     // 将空格的%20修改为+
+    urlencodePercentConvert(params);
     qDebug() << params;
     QString sign = QCryptographicHash::hash(params.toLatin1(), QCryptographicHash::Md5).toHex();
 
@@ -475,7 +475,7 @@ void MainWindow::on_pushButton_3_clicked()
     }
 
     params.append(kjt_secretkey);
-    params.replace("%20", "+");     // 将空格的%20修改为+
+    urlencodePercentConvert(params);
     qDebug() << params;
     QString sign = QCryptographicHash::hash(params.toLatin1(), QCryptographicHash::Md5).toHex();
 

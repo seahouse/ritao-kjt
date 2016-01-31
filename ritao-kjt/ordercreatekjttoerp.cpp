@@ -41,7 +41,7 @@ void OrderCreateKJTToERP::run(const QDateTime &dateTimeStart, const QDateTime &d
     }
 
     params.append(kjt_secretkey);
-    params.replace("%20", "+");     // 将空格的%20修改为+
+    urlencodePercentConvert(params);
     qDebug() << params;
     QString sign = QCryptographicHash::hash(params.toLatin1(), QCryptographicHash::Md5).toHex();
 

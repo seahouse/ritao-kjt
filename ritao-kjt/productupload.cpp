@@ -53,6 +53,9 @@ void ProductUpload::sTimeout()
     case OTProductUploadEnd:
         emit finished(true, tr("上传商品结束。"));
         break;
+    case OTProductUploadError:
+        emit finished(false, _msg);
+        break;
     default:
         break;
     }
@@ -102,10 +105,31 @@ void ProductUpload::uploadNextProduct()
         json["MerchantProductID"] = QString::number(query.value(tr("商品KID")).toInt());         // 商户商品 ID
         json["ProductName"] = query.value(tr("商品名称")).toString();               // 商品名称
         json["BriefName"] = "HW";   // query.value(tr("品名简称")).toString();                 // 商品简称  //
-        json["BrandCode"] = "950"; // query.value(tr("商品品牌ID")).toString();     // 品牌编号 code
-        json["C3Code"] = "A46"; // query.value(tr("商品分类ID")).toString();        // 三级分类 code
+
+        /// 获取跨境通品牌编码
+        QString brandCode;      // 默认值
+        QSqlQuery queryBrandCode;
+        queryBrandCode.prepare(tr("select * from 商品品牌 where 商品品牌KID=:brandCode"));
+        queryBrandCode.bindValue(":brandCode", query.value(tr("商品品牌ID")).toInt());
+        if (queryBrandCode.exec())
+            if (queryBrandCode.first())
+                brandCode = queryBrandCode.value(tr("跨境通商品品牌编码")).toString().trimmed();
+        /// temp: 如果為空，填寫默認值。 將來修改為日誌記錄與短信提示
+        brandCode = brandCode.isEmpty() ? "950" : brandCode;
+        json["BrandCode"] = brandCode;                      // 品牌编号 code
+        /// 获取跨境通分类编码
+        QString c3Code;      // 默认值
+        QSqlQuery queryC3Code;
+        queryC3Code.prepare(tr("select * from 商品分类 where 商品分类KID=:c3Code"));
+        queryC3Code.bindValue(":c3Code", query.value(tr("商品分类ID")).toInt());
+        if (queryC3Code.exec())
+            if (queryC3Code.first())
+                c3Code = queryC3Code.value(tr("跨境通商品分类编码")).toString().trimmed();
+        /// temp: 如果為空，填寫默認值。 將來修改為日誌記錄與短信提示
+        c3Code = c3Code.isEmpty() ? "A46" : c3Code;
+        json["C3Code"] = c3Code; // query.value(tr("商品分类ID")).toString();        // 三级分类 code
         json["ProductTradeType"] = query.value(tr("贸易类型")).toInt();             // 贸易类型  0 = 直邮 1 = 自贸
-        json["OriginCode"] = "JP"; // query.value(tr("产地")).toString();                   // 产地，两位字母     //
+        json["OriginCode"] = "JP"; // query.value(tr("产地")).toString();                   // 产地，两位字母。 默認為 JP
         json["ProductDesc"] = query.value(tr("商品简述")).toString();               // 商品简述
         json["ProductDescLong"] = query.value(tr("商品详细描述")).toString();             // 商品详述
 
@@ -125,15 +149,15 @@ void ProductUpload::uploadNextProduct()
         /// 2218 – 外高桥自贸模式
         productEntryInfoJsonObject["CustomsCode"] = "2244"; // query.value(tr("关区代码")).toString();  // 海关关区根据商品所入仓库对应的四位数关区代码填写        //
         productEntryInfoJsonObject["StoreType"] = 0;    // query.value(tr("运输方式")).toInt();         // 运输方式（默认0，常温） 0 = 常温 1 = 冷藏 2 = 冷冻     //
-        productEntryInfoJsonObject["ApplyUnit"] = "123";    // query.value(tr("申报单位")).toString();  // 申报单位, 不能为空        //
+        productEntryInfoJsonObject["ApplyUnit"] = tr("日淘");    // query.value(tr("申报单位")).toString();  // 申报单位, 不能为空        //
         productEntryInfoJsonObject["ApplyQty"] = 123;   // query.value(tr("申报数量")).toInt();  // 申报数量, 不能为空        //
-        productEntryInfoJsonObject["GrossWeight"] = 12.0;   // query.value(tr("商品毛重")).toDouble();     //
-        productEntryInfoJsonObject["SuttleWeight"] = 10.0;  // query.value(tr("商品净重")).toDouble();    //
+        productEntryInfoJsonObject["GrossWeight"] = 1.0;   // query.value(tr("商品毛重")).toDouble();     //
+        productEntryInfoJsonObject["SuttleWeight"] = 0.8;  // query.value(tr("商品净重")).toDouble();    //
         json["ProductEntryInfo"] = productEntryInfoJsonObject;
 
         QJsonObject productMaintainInfoJsonObject;                      // 商品维护信息
         productMaintainInfoJsonObject["ProductModel"] = "123";  // query.value(tr("商品型号")).toString();     //
-        productMaintainInfoJsonObject["Weight"] = 10.0; // query.value(tr("商品物流重量")).toDouble();     //
+        productMaintainInfoJsonObject["Weight"] = 1.0; // query.value(tr("商品物流重量")).toDouble();     //
         productMaintainInfoJsonObject["Length"] = query.value(tr("长度")).toDouble();
         productMaintainInfoJsonObject["Width"] = query.value(tr("宽度")).toDouble();
         productMaintainInfoJsonObject["Height"] = query.value(tr("高度")).toDouble();
@@ -143,13 +167,13 @@ void ProductUpload::uploadNextProduct()
         qInfo() << tr("ProductName: ") << query.value(tr("商品名称")).toString();
 
         QJsonDocument jsonDoc(json);
-        QFile file("11.txt");
-        if (file.open(QIODevice::WriteOnly))
-        {
-            QTextStream out(&file);
-            out << jsonDoc.toJson(QJsonDocument::Compact);
-            file.close();
-        }
+//        QFile file("11.txt");
+//        if (file.open(QIODevice::WriteOnly))
+//        {
+//            QTextStream out(&file);
+//            out << jsonDoc.toJson(QJsonDocument::Compact);
+//            file.close();
+//        }
         qDebug() << jsonDoc.toJson(QJsonDocument::Compact);
 
         paramsMap["data"] = jsonDoc.toJson(QJsonDocument::Compact);
@@ -163,20 +187,28 @@ void ProductUpload::uploadNextProduct()
             params.append(i.key()).append("=").append(i.value().toUtf8().toPercentEncoding()).append("&");
         }
 
+        urlencodePercentConvert(params);
         qDebug() << params;
         QString sign = QCryptographicHash::hash(QString(params + kjt_secretkey).toLatin1(), QCryptographicHash::Md5).toHex();
         params.append("sign=").append(sign);
+        qDebug() << sign;
 
         QNetworkRequest req;
         req.setUrl(QUrl(kjt_url));
         req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
         _manager->post(req, params.toLatin1());
     }
+    else
+    {
+        _timer->start(1000);
+        return;
+    }
 }
 
 void ProductUpload::sReplyFinished(QNetworkReply *reply)
 {
     QByteArray replyData = reply->readAll();
+    qDebug() << replyData;
 
     QJsonObject json(QJsonDocument::fromJson(replyData).object());
     QString code = json.value("Code").toString("-99");
@@ -190,7 +222,8 @@ void ProductUpload::sReplyFinished(QNetworkReply *reply)
         {
             QSqlQuery query;
             /// 将跨境通的ProductID 存入商品表
-            QString productID = json.value("ProductID").toString();
+            QJsonObject data = json.value("Data").toObject();
+            QString productID = data.value("ProductID").toString();
             query.prepare(tr("update 商品 set p28=:ProductID "
                              "where 商品KID=:id "));
             query.bindValue(":ProductID", productID);
@@ -205,6 +238,12 @@ void ProductUpload::sReplyFinished(QNetworkReply *reply)
             if (!query.exec())
                 qInfo() << tr("更新数据同步的跨境通商品新增处理: ") << query.lastError().text();
 
+            _timer->start(1000);
+        }
+        else
+        {
+            _optType = OTProductUploadError;
+            _msg = tr("上传商品错误：") + desc;
             _timer->start(1000);
         }
         break;

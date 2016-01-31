@@ -32,6 +32,7 @@ void OrderDownload::download()
 {
     _optType = OTDownloadIdList;
     _ohData._success = true;
+    _ohData._msgList.clear();
 
     _timer->start(1000);
 }
@@ -147,8 +148,14 @@ void OrderDownload::downloadOrderIdList()
     json["OrderDateBegin"] = dateStart.toString("yyyy-MM-dd hh:mm:ss");
     json["OrderDateEnd"] = _ohData._dateEnd.toString("yyyy-MM-dd hh:mm:ss");
     QJsonDocument jsonDoc(json);
+    QFile file("11.txt");
+    if (file.open(QIODevice::WriteOnly))
+    {
+        QTextStream out(&file);
+        out << jsonDoc.toJson(QJsonDocument::Compact);
+        file.close();
+    }
     qDebug() << jsonDoc.toJson(QJsonDocument::Compact);
-
     paramsMap["data"] = jsonDoc.toJson(QJsonDocument::Compact);
     qDebug() << paramsMap;
 
@@ -161,7 +168,7 @@ void OrderDownload::downloadOrderIdList()
     }
 
     params.append(kjt_secretkey);
-    params.replace("%20", "+");     // 将空格的%20修改为+
+    urlencodePercentConvert(params);
     qDebug() << params;
     QString sign = QCryptographicHash::hash(params.toLatin1(), QCryptographicHash::Md5).toHex();
 
@@ -198,6 +205,13 @@ void OrderDownload::downloadNextOrders()
     _ohData._currentIndex += 20;
     json["OrderIDList"] = orderIdListArray;
     QJsonDocument jsonDoc(json);
+//    QFile file("11.txt");
+//    if (file.open(QIODevice::WriteOnly))
+//    {
+//        QTextStream out(&file);
+//        out << jsonDoc.toJson(QJsonDocument::Compact);
+//        file.close();
+//    }
     qDebug() << jsonDoc.toJson(QJsonDocument::Compact);
 
     paramsMap["data"] = jsonDoc.toJson(QJsonDocument::Compact);
@@ -212,7 +226,7 @@ void OrderDownload::downloadNextOrders()
     }
 
     params.append(kjt_secretkey);
-    params.replace("%20", "+");     // 将空格的%20修改为+
+    urlencodePercentConvert(params);
     qDebug() << params;
     QString sign = QCryptographicHash::hash(params.toLatin1(), QCryptographicHash::Md5).toHex();
 
