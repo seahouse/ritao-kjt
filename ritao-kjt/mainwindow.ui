@@ -114,6 +114,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="btnDownloadProduct">
+        <property name="text">
+         <string>下载商品</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="pushButton_4">
         <property name="text">
          <string>上传订单</string>

@@ -5,6 +5,7 @@
 #include "orderupload.h"
 #include "orderdownload.h"
 #include "productupload.h"
+#include "productdownload.h"
 
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
@@ -53,7 +54,11 @@ MainWindow::MainWindow(QWidget *parent) :
     _productUpload = new ProductUpload;
     connect(_productUpload, SIGNAL(finished(bool,QString)), this, SLOT(sProductUploadFinished(bool, QString)));
 
+    _productDownload = new ProductDownload;
+    connect(_productDownload, SIGNAL(finished(bool,QString)), this, SLOT(sProductDownloadFinished(bool, QString)));
+
     connect(ui->pbnStart, SIGNAL(clicked(bool)), this, SLOT(sStart()));
+    connect(ui->btnDownloadProduct, SIGNAL(clicked(bool)), this, SLOT(sDownloadProduct()));
 
     ui->pushButton->hide();
     ui->pushButton_2->hide();
@@ -812,6 +817,12 @@ void MainWindow::on_pushButton_7_clicked()
     _orderDownload->download();
 }
 
+void MainWindow::sDownloadProduct()
+{
+    _synchronizeType = STProductDownload;
+    _productDownload->download();
+}
+
 void MainWindow::sOrderDownloadFinished(bool success, const QString &msg)
 {
     output(QString::number(success) + ":" + msg);
@@ -819,4 +830,12 @@ void MainWindow::sOrderDownloadFinished(bool success, const QString &msg)
     _synchronizeType = STNone;
     ui->pbnStart->setEnabled(true);
     _timer->start(1800000);     // 30分钟
+}
+
+void MainWindow::sProductDownloadFinished(bool success, const QString &msg)
+{
+    output(QString::number(success) + ":" + msg);
+
+//    _synchronizeType = STOrderUpload;
+//    _timer->start(1000);
 }

@@ -20,7 +20,8 @@ SOURCES += main.cpp\
     rnetworkaccessmanager.cpp \
     orderupload.cpp \
     productupload.cpp \
-    orderdownload.cpp
+    orderdownload.cpp \
+    productdownload.cpp
 
 HEADERS  += mainwindow.h \
     connection.h \
@@ -29,6 +30,7 @@ HEADERS  += mainwindow.h \
     rnetworkaccessmanager.h \
     orderupload.h \
     productupload.h \
-    orderdownload.h
+    orderdownload.h \
+    productdownload.h
 
 FORMS    += mainwindow.ui

@@ -15,6 +15,7 @@ class OrderCreateKJTToERP;
 class OrderUpload;
 class ProductUpload;
 class OrderDownload;
+class ProductDownload;
 
 namespace Ui {
 class MainWindow;
@@ -69,6 +70,7 @@ public:
         STNone,
         STProductCreate,                // 获取ERP的商品信息，上传到跨境通
         STProductUpload,                // 上传ERP商品到跨境通
+        STProductDownload,              // 下载跨境通商品到ERP
         STOrderUpload,                  // 上传ERP订单到跨境通
         STOrderDownload,                // 下载跨境通订单到ERP
         STOrderCreateKJTToERP,          // 获取时间区间内的的订单id列表
@@ -104,6 +106,9 @@ private slots:
     void on_pushButton_7_clicked();
     void sOrderDownloadFinished(bool success, const QString &msg);
 
+    void sDownloadProduct();
+    void sProductDownloadFinished(bool success, const QString &msg);
+
 private:
     void synchronizeProductCreate();                        // 同步商品: 将ERP商品上传到跨境通
     void orderInfoBatchGet();
@@ -130,7 +135,7 @@ private:
     OrderDownload *_orderDownload;
 //    OrderCreateKJTToERP *_orderCreateKJTToERP;
     ProductUpload *_productUpload;
-
+    ProductDownload * _productDownload;
 };
 
 #endif // MAINWINDOW_H
