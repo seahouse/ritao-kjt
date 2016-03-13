@@ -121,6 +121,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="btnDownloadProductPrice">
+        <property name="text">
+         <string>下载商品价格</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="pushButton_4">
         <property name="text">
          <string>上传订单</string>

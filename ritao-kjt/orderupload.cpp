@@ -160,7 +160,7 @@ void OrderUpload::uploadNextOrder()
                 queryItem.bindValue(":productIDERP", productIDERP);
                 if (queryItem.exec())
                     if (queryItem.first())
-                        productIDKJT = queryItem.value("p28").toString();
+                        productIDKJT = queryItem.value("p31").toString();
 
                 itemObject["ProductID"] = productIDKJT;                                       // KJT 商品 ID
                 itemObject["Quantity"] = queryItemList.value(tr("购买数量")).toInt();           // 购买数量

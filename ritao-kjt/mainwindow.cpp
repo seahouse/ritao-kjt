@@ -6,6 +6,7 @@
 #include "orderdownload.h"
 #include "productupload.h"
 #include "productdownload.h"
+#include "productpricedownload.h"
 
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
@@ -59,6 +60,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->pbnStart, SIGNAL(clicked(bool)), this, SLOT(sStart()));
     connect(ui->btnDownloadProduct, SIGNAL(clicked(bool)), this, SLOT(sDownloadProduct()));
+    connect(ui->btnDownloadProductPrice, SIGNAL(clicked(bool)), this, SLOT(sDownloadProductPrice()));
 
     ui->pushButton->hide();
     ui->pushButton_2->hide();
@@ -83,7 +85,8 @@ void MainWindow::sStart()
 
     ui->pbnStart->setEnabled(false);
 
-    _synchronizeType = STProductUpload;
+    _synchronizeType = STProductUpload;     // 暂时不考虑商品上传功能
+    _synchronizeType = STProductDownload;
     _timer->start(1000);
 }
 
@@ -180,6 +183,9 @@ void MainWindow::sTimeout()
     switch (_synchronizeType) {
     case STProductUpload:
         on_pushButton_6_clicked();
+        break;
+    case STProductDownload:
+        sDownloadProduct();
         break;
     case STOrderUpload:
         on_pushButton_4_clicked();
@@ -823,6 +829,28 @@ void MainWindow::sDownloadProduct()
     _productDownload->download();
 }
 
+void MainWindow::sProductDownloadFinished(bool success, const QString &msg)
+{
+    output(QString::number(success) + ":" + msg);
+
+    _synchronizeType = STOrderUpload;
+    _timer->start(1000);
+}
+
+void MainWindow::sDownloadProductPrice()
+{
+    _synchronizeType = STProductPriceDownload;
+    _productDownload->download();
+}
+
+void MainWindow::sProductDownloadPriceFinished(bool success, const QString &msg)
+{
+    output(QString::number(success) + ":" + msg);
+
+//    _synchronizeType = STOrderUpload;
+//    _timer->start(1000);
+}
+
 void MainWindow::sOrderDownloadFinished(bool success, const QString &msg)
 {
     output(QString::number(success) + ":" + msg);
@@ -832,10 +860,4 @@ void MainWindow::sOrderDownloadFinished(bool success, const QString &msg)
     _timer->start(1800000);     // 30分钟
 }
 
-void MainWindow::sProductDownloadFinished(bool success, const QString &msg)
-{
-    output(QString::number(success) + ":" + msg);
 
-//    _synchronizeType = STOrderUpload;
-//    _timer->start(1000);
-}

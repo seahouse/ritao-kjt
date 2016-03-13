@@ -224,7 +224,7 @@ void ProductUpload::sReplyFinished(QNetworkReply *reply)
             /// 将跨境通的ProductID 存入商品表
             QJsonObject data = json.value("Data").toObject();
             QString productID = data.value("ProductID").toString();
-            query.prepare(tr("update 商品 set p28=:ProductID "
+            query.prepare(tr("update 商品 set p31=:ProductID "
                              "where 商品KID=:id "));
             query.bindValue(":ProductID", productID);
             query.bindValue(":id", _ohData._currentProductId);

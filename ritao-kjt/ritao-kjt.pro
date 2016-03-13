@@ -21,7 +21,8 @@ SOURCES += main.cpp\
     orderupload.cpp \
     productupload.cpp \
     orderdownload.cpp \
-    productdownload.cpp
+    productdownload.cpp \
+    productpricedownload.cpp
 
 HEADERS  += mainwindow.h \
     connection.h \
@@ -31,6 +32,7 @@ HEADERS  += mainwindow.h \
     orderupload.h \
     productupload.h \
     orderdownload.h \
-    productdownload.h
+    productdownload.h \
+    productpricedownload.h
 
 FORMS    += mainwindow.ui

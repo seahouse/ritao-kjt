@@ -1,4 +1,4 @@
-#include "productdownload.h"
+#include "productpricedownload.h"
 
 #include "global.h"
 
@@ -18,7 +18,7 @@
 #include <QNetworkReply>
 #include <QFile>
 
-ProductDownload::ProductDownload(QObject *parent) : QObject(parent),
+ProductPriceDownload::ProductPriceDownload(QObject *parent) : QObject(parent),
     _optType(OTNone)
 {
     _timer = new QTimer;
@@ -28,7 +28,7 @@ ProductDownload::ProductDownload(QObject *parent) : QObject(parent),
     connect(_manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(sReplyFinished(QNetworkReply*)));
 }
 
-void ProductDownload::download()
+void ProductPriceDownload::download()
 {
     _optType = OTDownloadIdList;
     _phData._success = true;
@@ -37,7 +37,7 @@ void ProductDownload::download()
     _timer->start(1000);
 }
 
-void ProductDownload::sTimeout()
+void ProductPriceDownload::sTimeout()
 {
     _timer->stop();
 
@@ -58,7 +58,7 @@ void ProductDownload::sTimeout()
     }
 }
 
-void ProductDownload::sReplyFinished(QNetworkReply *reply)
+void ProductPriceDownload::sReplyFinished(QNetworkReply *reply)
 {
     QByteArray replyData = reply->readAll();
 
@@ -104,14 +104,6 @@ void ProductDownload::sReplyFinished(QNetworkReply *reply)
         if ("0" == code)
         {
             QJsonObject data = json.value("Data").toObject();
-            QJsonDocument jsonDoc(json);
-            QFile file("data.txt");
-            if (file.open(QIODevice::WriteOnly))
-            {
-                QTextStream out(&file);
-                out << jsonDoc.toJson(QJsonDocument::Compact);
-                file.close();
-            }
             QJsonArray productListArray = data.value("ProductList").toArray();
             for (int i = 0; i < productListArray.size(); i++)
                 insertProduct2ERPByJson(productListArray.at(i).toObject());
@@ -125,7 +117,7 @@ void ProductDownload::sReplyFinished(QNetworkReply *reply)
     qInfo() << opt << code << desc;
 }
 
-void ProductDownload::downloadProductIdList()
+void ProductPriceDownload::downloadProductIdList()
 {
     QMap<QString, QString> paramsMap(g_paramsMap);
     paramsMap["method"] = "Product.ProductIDGetQuery";    // 由接口提供方指定的接口标识符
@@ -183,7 +175,7 @@ void ProductDownload::downloadProductIdList()
     _manager->get(QNetworkRequest(QUrl(url)));
 }
 
-void ProductDownload::downloadNextProducts()
+void ProductPriceDownload::downloadNextProducts()
 {
     if (_phData._currentIndex >= _phData._total)
     {
@@ -242,7 +234,7 @@ void ProductDownload::downloadNextProducts()
     _manager->get(QNetworkRequest(QUrl(url)));
 }
 
-void ProductDownload::setProductGetFromKJTTime()
+void ProductPriceDownload::setProductGetFromKJTTime()
 {
     if (!_phData._success) return;
     if (!_phData._dateStart.isValid() || !_phData._dateEnd.isValid()) return;
@@ -263,7 +255,7 @@ void ProductDownload::setProductGetFromKJTTime()
     }
 }
 
-void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
+void ProductPriceDownload::insertProduct2ERPByJson(const QJsonObject &json)
 {
     QString productId = json.value("ProductID").toString();             // ProductID
     int categoryID = json.value("CategoryID").toInt();                  // 商品类别ID
@@ -287,8 +279,7 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
     int productTradeType = json.value("ProductTradeType").toInt();      // 贸易类型：0 = 直邮, 1 = 自贸
     int onlineQty = json.value("OnlineQty").toInt();                    // 渠道独占库存
     int platformQty = json.value("PlatformQty").toInt();                // 平台可售库存
-    /// 价格：跨境通实际返回的是string，文档中却是double，需要先toString，再toDouble
-    double price = json.value("Price").toString().toDouble();           // 渠道分销价格，
+    double price = json.value("Price").toDouble();                      // 渠道分销价格
     int storeSysNo = json.value("StoreSysNo").toInt();                  // 店铺编号
 //    QDateTime orderDate = convertKjtTime(json.value("OrderDate").toString());           // 订单时间
 
@@ -306,7 +297,7 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
     int bizType = productEntryInfoObject.value("BizType").toInt();                          // 业务类型: 0 =一般进口, 1=保税进口
     double suttleWeight = productEntryInfoObject.value("SuttleWeight").toDouble();          // 净重
     QString note = productEntryInfoObject.value("Note").toString();                         // 其他备注
-    double tariffRate = productEntryInfoObject.value("TariffRate").toString().toDouble();   // 税率
+    double tariffRate = productEntryInfoObject.value("TariffRate").toDouble();              // 税率
     QString entryCode = productEntryInfoObject.value("EntryCode").toString();               // 备案信息
     int productStoreType = productEntryInfoObject.value("ProductStoreType").toInt();        // 存储方式: 0 =常温, 1 =冷藏, 2=冷冻
     QDateTime manufactureDate = convertKjtTime(json.value("ManufactureDate").toString());   // 出厂日期
@@ -349,7 +340,7 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
         queryUpdate.bindValue(":productMode", productMode);
         queryUpdate.bindValue(":productDesc", productDesc);
 
-        queryUpdate.bindValue(":weight", weight / 1000.0);
+        queryUpdate.bindValue(":weight", weight);
         queryUpdate.bindValue(":productDescLong", productDescLong);
         queryUpdate.bindValue(":productPhotoDesc", productPhotoDesc);
         queryUpdate.bindValue(":performance", performance);
@@ -392,8 +383,7 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
                             "p5, p6, 销售价, 商品英文名称, 商品规格, "
                             "产地, 计税单位, 申报单位, 商品毛重, 商品净重, "
                             "商品备注, 商品关税, p39, 是否属于保税仓, p23, p28,"
-                            "手机端详细描述, 商品状态, 决策审核, 自定义ID1, 创建日期, "
-                            "p22 "
+                            "手机端详细描述, 商品状态, 决策审核, 自定义ID1, 创建日期 "
                             ") values ("
                             ":productId, :categoryID, :productName, :productId2, :productMode, :productDesc, "
                             ":weight, :productDescLong, :productPhotoDesc, :performance, :warranty, "
@@ -401,8 +391,7 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
                             ":onlineQty, :platformQty, :price, :productName_EN, :specifications, "
                             ":origin, :taxUnit, :applyUnit, :grossWeight, :suttleWeight, "
                             ":note, :tariffRate, :originCountryName, :isBaoshuicang, :p23, :p28,"
-                            ":productDescLong2, :productStatus, :decisionreview, :customid1, :createDate, "
-                            ":productId3 "
+                            ":productDescLong2, :productStatus, :decisionreview, :customid1, :createDate "
                             ")");
         queryInsert.bindValue(":productId", productId);
         queryInsert.bindValue(":categoryID", categoryID);
@@ -412,7 +401,7 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
         queryInsert.bindValue(":productMode", productMode);
         queryInsert.bindValue(":productDesc", productDesc);
 
-        queryInsert.bindValue(":weight", weight / 1000.0);
+        queryInsert.bindValue(":weight", weight);
         queryInsert.bindValue(":productDescLong", productDescLong);
         queryInsert.bindValue(":productPhotoDesc", productPhotoDesc);
         queryInsert.bindValue(":performance", performance);
@@ -448,7 +437,6 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
         queryInsert.bindValue(":decisionreview", 1);
         queryInsert.bindValue(":customid1", 1);
         queryInsert.bindValue(":createDate", QDateTime::currentDateTime());
-        queryInsert.bindValue(":productId3", productId);
         if (!queryInsert.exec())
         {
             qInfo() << queryInsert.lastError().text();
@@ -457,7 +445,7 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
     }
 }
 
-QDateTime ProductDownload::convertKjtTime(const QString &kjtTime)
+QDateTime ProductPriceDownload::convertKjtTime(const QString &kjtTime)
 {
     /// 跨镜通将会把日期修改为 yyyy-MM-dd hh:mm:ss 形式。到时再修改此处
     qint64 utcTime = kjtTime.mid(kjtTime.indexOf("(") + 1, 13).toLongLong();
