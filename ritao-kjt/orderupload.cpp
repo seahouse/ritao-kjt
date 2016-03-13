@@ -98,7 +98,7 @@ void OrderUpload::uploadNextOrder()
 
         QJsonObject json;
 
-        json["SaleChannelSysNo"] = 1106;                // 渠道编号
+        json["SaleChannelSysNo"] = kjt_saleschannelsysno;                // 渠道编号
         _ohData._currentOrderNumber = query.value(tr("订单号")).toString();
         json["MerchantOrderID"] = _ohData._currentOrderNumber;
 

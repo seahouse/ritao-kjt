@@ -87,7 +87,7 @@ void ProductDownload::sReplyFinished(QNetworkReply *reply)
             }
             _phData._productList = productList;
             _phData._currentIndex = 0;
-//            qDebug() << "orderIdList:" << _phData._productList;
+            qDebug() << "total count:" << _phData._total;
 
             _optType = OTProductDownloading;
             _timer->start(1000);
@@ -140,7 +140,7 @@ void ProductDownload::downloadProductIdList()
     _phData._dateEnd = QDateTime::currentDateTime();
 
     QJsonObject json;
-    json["SaleChannelSysNo"] = "1106";
+    json["SaleChannelSysNo"] = kjt_saleschannelsysno;
     json["ChangedDateBegin"] = dateStart.toString("yyyy-MM-dd hh:mm:ss");
     json["ChangedDateEnd"] = _phData._dateEnd.toString("yyyy-MM-dd hh:mm:ss");
     QJsonDocument jsonDoc(json);
@@ -200,7 +200,7 @@ void ProductDownload::downloadNextProducts()
     }
     _phData._currentIndex += 5;
     json["ProductIDs"] = productIdListArray;
-    json["SaleChannelSysNo"] = "1106";
+    json["SaleChannelSysNo"] = kjt_saleschannelsysno;
     QJsonDocument jsonDoc(json);
 //    QFile file("11.txt");
 //    if (file.open(QIODevice::WriteOnly))
@@ -247,7 +247,7 @@ void ProductDownload::setProductGetFromKJTTime()
         qInfo() << query.lastError().text();
     }
 
-    query.prepare(tr("update 系统参数 set 参数内容Date=:dateStart where 参数分组='跨境通' and 参数名称='订单下载结束时间'"));
+    query.prepare(tr("update 系统参数 set 参数内容Date=:dateStart where 参数分组='跨境通' and 参数名称='商品下载结束时间'"));
     query.bindValue(":dateStart", _phData._dateEnd);
     if (!query.exec())
     {
@@ -262,6 +262,9 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
     QString categoryName = json.value("CategoryName").toString();       // 商品类别名称
     QString productName = json.value("ProductName").toString();         // 商品名称
     QString briefName = json.value("BriefName").toString();             // 商品简称
+    QString productMode = json.value("ProductMode").toString();         // 商品型号
+    QString productDesc = json.value("ProductDesc").toString();         // 商品简述
+    double weight = json.value("Weight").toDouble();                    // 重量(单位:克)
     QString productDescLong = json.value("ProductDescLong").toString(); // 详细描述
     QString productPhotoDesc = json.value("ProductPhotoDesc").toString();   // 以图片方式展示的详细描述
     QString performance = json.value("Performance").toString();         // 详细规格
@@ -270,7 +273,8 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
     QString defaultImage = json.value("DefaultImage").toString();       // 默认图片
     QString promotionTitle = json.value("PromotionTitle").toString();   // 促销标题
     QString keyWords = json.value("KeyWords").toString();               // 关键字
-    int vendorID = json.value("VendorID").toInt();                      // 供应商名称
+    int vendorID = json.value("VendorID").toInt();                      // 供应商编号
+    QString vendorName = json.value("VendorName").toString();           // 供应商名称
     int brandID = json.value("BrandID").toInt();                        // 品牌编号
     int productTradeType = json.value("ProductTradeType").toInt();      // 贸易类型：0 = 直邮, 1 = 自贸
     int onlineQty = json.value("OnlineQty").toInt();                    // 渠道独占库存
@@ -281,7 +285,7 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
 
     QJsonObject productEntryInfoObject = json.value("ProductEntryInfo").toObject();         // 商品库存列表
     QString productName_EN = productEntryInfoObject.value("ProductName_EN").toString();     // 商品英文名称
-    QString Specifications = productEntryInfoObject.value("Specifications").toString();     // 规格
+    QString specifications = productEntryInfoObject.value("Specifications").toString();     // 规格
     QString functions = productEntryInfoObject.value("Functions").toString();               // 功能
     QString component = productEntryInfoObject.value("Component").toString();               // 成分
     QString origin = productEntryInfoObject.value("Origin").toString();                     // 产地
@@ -303,123 +307,139 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
 
 
     qDebug() << productId << productName;
-//    if (10022053 != orderId) return;
+    if (productId == "032JPH027440001")
+        int iii = 0;
 
     /// 仅下载付款后，待出库的订单
 //    if (sOStatusCode != 1) return;
 
-//    QSqlQuery query;
-//    query.prepare(tr("select * from 订单 where 订单类型=:OrderType and 第三方订单号=:MerchantOrderID"));
-//    query.bindValue(":OrderType", "kjt");
-//    query.bindValue(":MerchantOrderID", QString::number(orderId));
-//    if (!query.exec())
-//    {
-//        qInfo() << query.lastError().text();
-//        _phData._success = false;
-//    }
-//    /// 已存在此订单编号，直接返回
-//    if (query.first())
-//    {
-//        qInfo() << tr("此订单已存在。kjt系统订单号：")  + QString::number(orderId);
-//        return;
-//    }
+    QSqlQuery query;
+    query.prepare(tr("select * from 商品 where p31=:productId"));
+    query.bindValue(":productId", productId);
+    if (!query.exec())
+    {
+        qInfo() << query.lastError().text();
+        _phData._success = false;
+        return;
+    }
+    /// 若存在，则更新；若不存在，则新增
+    if (query.first())
+    {
+        QSqlQuery queryUpdate;
+        queryUpdate.prepare("update 商品 set "
+                            "商品分类ID=:categoryID, 商品名称=:productName, 品名简称=:briefName, 商品型号=:productMode, 商品简述=:productDesc, "
+                            "商品物流重量=:weight, 商品详细描述=:productDescLong, p32=:productPhotoDesc, p33=:performance, p34=:warranty, "
+                            "p35=:attention, p7=:vendorID, p37=:vendorName, 商品品牌ID=:brandID, 贸易类型=:productTradeType, "
+                            "p5=:onlineQty, p6=:platformQty, 销售价=:price, 商品英文名称=:productName_EN, 商品规格=:specifications, "
+                            "产地=:origin, 计税单位=:taxUnit, 申报单位=:applyUnit, 商品毛重=:grossWeight, 商品净重=:suttleWeight, "
+                            "商品备注=:note, p39=:originCountryName "
+                            "where p31=:productId");
+        queryUpdate.bindValue(":categoryID", categoryID);
+        queryUpdate.bindValue(":productName", productName);
+        queryUpdate.bindValue(":briefName", briefName);
+        queryUpdate.bindValue(":productMode", productMode);
+        queryUpdate.bindValue(":productDesc", productDesc);
 
-//    query.prepare(tr("insert into 订单("
-//                     "订单号, 订单类型, 第三方订单号, 下单日期, 跨境通订单状态, "
-//                     "贸易类型, 审核日期, 发货日期, 商品总金额, 配送费用, "
-//                     "税金, 支付手续费, 支付方式, 支付流水号, 付款状态, "
-//                     "收货人, 手机号码, 收货地址, 邮政编码, 发件人姓名, "
-//                     "发件人电话, 发件人地址, 发件地邮编, 注册地址, 运单号, 个人姓名, "
-//                     "纳税人识别号, 注册电话, 电子邮件, 获取时间 "
-//                     ") values ("
-//                     ":OrderID, :OrderType, :MerchantOrderID, :OrderDate, :SOStatusCode, "
-//                     ":TradeType, :AuditTime, :SOOutStockTime, :ProductAmount, :ShippingAmount, "
-//                     ":TaxAmount, :CommissionAmount, :PayTypeSysNo, :PaySerialNumber, :PayStatusCode, "
-//                     ":ReceiveName, :ReceivePhone, :ReceiveAddress, :ReceiveZip, :SenderName, "
-//                     ":SenderTel, :SenderAddr, :SenderZip, :ReceiveAreaName, :TrackingNumber, :Name, "
-//                     ":IDCardNumber, :PhoneNumber, :Email, :GetTime "
-//                     ")"));
+        queryUpdate.bindValue(":weight", weight);
+        queryUpdate.bindValue(":productDescLong", productDescLong);
+        queryUpdate.bindValue(":productPhotoDesc", productPhotoDesc);
+        queryUpdate.bindValue(":performance", performance);
+        queryUpdate.bindValue(":warranty", warranty);
 
-//    /// 订单号规则
-//    /// 01（表示主订单） + 两位随机数 + 当前时间的日（两位） + 当前时间的月+70（两位） + 四位随机数
-//    QString orderNumber = QString("%1%2%3%4%5")
-//            .arg("01")
-//            .arg(QString::number(qrand() % 100), 2, '0')
-//            .arg(QDate::currentDate().toString("dd"))
-//            .arg(QString::number(QDate::currentDate().month() + 70))
-//            .arg(QString::number(qrand() % 10000), 4, '0');
-//    query.bindValue(":OrderID", orderNumber);
-//    query.bindValue(":OrderType", "kjt");               // 固定为 kjt
-//    query.bindValue(":MerchantOrderID", orderId);
-//    query.bindValue(":OrderDate", orderDate);
-//    query.bindValue(":SOStatusCode", sOStatusCode);
+        queryUpdate.bindValue(":attention", attention);
+        queryUpdate.bindValue(":vendorID", vendorID);
+        queryUpdate.bindValue(":vendorName", vendorName);
+        queryUpdate.bindValue(":brandID", brandID);
+        queryUpdate.bindValue(":productTradeType", productTradeType);
 
-//    query.bindValue(":TradeType", tradeType);
-//    query.bindValue(":AuditTime", auditTime);
-//    query.bindValue(":SOOutStockTime", sOOutStockTime);
-//    query.bindValue(":ProductAmount", productAmount);
-//    query.bindValue(":ShippingAmount", shippingAmount);
+        queryUpdate.bindValue(":onlineQty", onlineQty);
+        queryUpdate.bindValue(":platformQty", platformQty);
+        queryUpdate.bindValue(":price", price);
+        queryUpdate.bindValue(":productName_EN", productName_EN);
+        queryUpdate.bindValue(":specifications", specifications);
 
-//    query.bindValue(":TaxAmount", taxAmount);
-//    query.bindValue(":CommissionAmount", commissionAmount);
-//    query.bindValue(":PayTypeSysNo", payTypeSysNo);
-//    query.bindValue(":PaySerialNumber", paySerialNumber.isNull() ? "" : paySerialNumber);
-//    query.bindValue(":PayStatusCode", payStatusCode);
+        queryUpdate.bindValue(":origin", origin);
+        queryUpdate.bindValue(":taxUnit", taxUnit);
+        queryUpdate.bindValue(":applyUnit", applyUnit);
+        queryUpdate.bindValue(":grossWeight", grossWeight);
+        queryUpdate.bindValue(":suttleWeight", suttleWeight);
 
-//    query.bindValue(":ReceiveName", receiveName);
-//    query.bindValue(":ReceivePhone", receivePhone.isNull() ? "" : receivePhone);
-//    query.bindValue(":ReceiveAddress", receiveAddress);
-//    query.bindValue(":ReceiveZip", receiveZip);
-//    query.bindValue(":ReceiveAreaName", receiveAreaName.isNull() ? "" : receiveAreaName);
-//    query.bindValue(":SenderName", senderName.isNull() ? "" : senderName);
+        queryUpdate.bindValue(":note", note);
+        queryUpdate.bindValue(":originCountryName", originCountryName);
 
-//    query.bindValue(":SenderTel", senderTel.isNull() ? "" : senderTel);
-//    query.bindValue(":SenderAddr", senderAddr.isNull() ? "" : senderAddr);
-//    query.bindValue(":SenderZip", senderZip.isNull() ? "" : senderZip);
-//    query.bindValue(":TrackingNumber", trackingNumber.isNull() ? "" : trackingNumber);
-//    query.bindValue(":Name", name);
+        if (!queryUpdate.exec())
+        {
+            qInfo() << queryUpdate.lastError().text();
+            _phData._success = false;
+        }
+    }
+    else
+    {
+        QSqlQuery queryInsert;
+        queryInsert.prepare("insert into 商品( "
+                            "p31, 商品分类ID, 商品名称, 商品编码, 品名简称, 商品型号, 商品简述, "
+                            "商品物流重量, 商品详细描述, p32, p33, p34, "
+                            "p35, p7, p37, 商品品牌ID, 贸易类型, "
+                            "p5, p6, 销售价, 商品英文名称, 商品规格, "
+                            "产地, 计税单位, 申报单位, 商品毛重, 商品净重, "
+                            "商品备注, p39, 是否属于保税仓, p23, p28,"
+                            "手机端详细描述, 商品状态 "
+                            ") values ("
+                            ":productId, :categoryID, :productName, :productId2, :briefName, :productMode, :productDesc, "
+                            ":weight, :productDescLong, :productPhotoDesc, :performance, :warranty, "
+                            ":attention, :vendorID, :vendorName, :brandID, :productTradeType, "
+                            ":onlineQty, :platformQty, :price, :productName_EN, :specifications, "
+                            ":origin, :taxUnit, :applyUnit, :grossWeight, :suttleWeight, "
+                            ":note, :originCountryName, :isBaoshuicang, :p23, :p28,"
+                            ":productDescLong2, :productStatus "
+                            ")");
+        queryInsert.bindValue(":productId", productId);
+        queryInsert.bindValue(":categoryID", categoryID);
+        queryInsert.bindValue(":productName", productName);
+        queryInsert.bindValue(":productId2", productId);
+        queryInsert.bindValue(":briefName", briefName);
+        queryInsert.bindValue(":productMode", productMode);
+        queryInsert.bindValue(":productDesc", productDesc);
 
-//    query.bindValue(":IDCardNumber", iDCardNumber);
-//    query.bindValue(":PhoneNumber", phoneNumber.isNull() ? "" : phoneNumber);
-//    query.bindValue(":Email", email);
-//    query.bindValue(":GetTime", QDateTime::currentDateTime());              // 同步时间为当前时间
-//    if (!query.exec())
-//    {
-////        qFatal(query.lastError().text().toStdString().c_str());
-//        qInfo() << query.lastError().text();
-//        _phData._success = false;
-//    }
-//    else
-//    {
-//        /// 将来插入库存信息数据
-//        int parentId = query.lastInsertId().toInt();        // 订单id
-//        if (parentId > 0)
-//        {
-//            QSqlQuery queryItemInfo;
-//            foreach (SOItemInfo sOitemInfo, sOItemInfoList) {
-//                queryItemInfo.prepare(tr("insert into 订单商品 ("
-//                                         "订单id, 商品名称, 商品编号, 购买数量, 销售单价, "
-//                                         "税金 "
-//                                         ") values ("
-//                                         ":OrderId, :ProductName, :ProductID, :Quantity, :ProductPrice, "
-//                                         ":TaxPrice "
-//                                         ")"));
-//                queryItemInfo.bindValue(":OrderId", parentId);
-//                queryItemInfo.bindValue(":ProductName", sOitemInfo._productName.isNull() ? "" : sOitemInfo._productName);
-//                queryItemInfo.bindValue(":ProductID", sOitemInfo._productId.isNull() ? "" : sOitemInfo._productId);
-//                queryItemInfo.bindValue(":Quantity", sOitemInfo._quantity);
-//                queryItemInfo.bindValue(":ProductPrice", sOitemInfo._productPrice);
-//                queryItemInfo.bindValue(":TaxPrice", sOitemInfo._taxPrice);
+        queryInsert.bindValue(":weight", weight);
+        queryInsert.bindValue(":productDescLong", productDescLong);
+        queryInsert.bindValue(":productPhotoDesc", productPhotoDesc);
+        queryInsert.bindValue(":performance", performance);
+        queryInsert.bindValue(":warranty", warranty);
 
-//                if (!queryItemInfo.exec())
-//                {
-//                    qInfo() << queryItemInfo.lastError().text();
-//                    _phData._success = false;
-//                }
-//            }
-//        }
+        queryInsert.bindValue(":attention", attention);
+        queryInsert.bindValue(":vendorID", vendorID);
+        queryInsert.bindValue(":vendorName", vendorName);
+        queryInsert.bindValue(":brandID", brandID);
+        queryInsert.bindValue(":productTradeType", productTradeType);
 
-//    }
+        queryInsert.bindValue(":onlineQty", onlineQty);
+        queryInsert.bindValue(":platformQty", platformQty);
+        queryInsert.bindValue(":price", price);
+        queryInsert.bindValue(":productName_EN", productName_EN);
+        queryInsert.bindValue(":specifications", specifications);
+
+        queryInsert.bindValue(":origin", origin);
+        queryInsert.bindValue(":taxUnit", taxUnit);
+        queryInsert.bindValue(":applyUnit", applyUnit);
+        queryInsert.bindValue(":grossWeight", grossWeight);
+        queryInsert.bindValue(":suttleWeight", suttleWeight);
+
+        queryInsert.bindValue(":note", note);
+        queryInsert.bindValue(":originCountryName", originCountryName);
+        queryInsert.bindValue(":isBaoshuicang", 1);
+        queryInsert.bindValue(":p23", specifications);
+        queryInsert.bindValue(":p28", productTradeType == 0 ? "直邮" : "保税");
+
+        queryInsert.bindValue(":productDescLong2", productDescLong);
+        queryInsert.bindValue(":productStatus", 1);
+        if (!queryInsert.exec())
+        {
+            qInfo() << queryInsert.lastError().text();
+            _phData._success = false;
+        }
+    }
+
 
 }
 

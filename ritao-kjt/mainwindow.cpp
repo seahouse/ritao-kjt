@@ -105,7 +105,7 @@ void MainWindow::on_pushButton_clicked()
     QJsonArray jsonArray;
     jsonArray.append(QJsonValue("345JPA018400002"));
     json["ProductIDs"] = jsonArray;
-    json["SaleChannelSysNo"] = 1106;
+    json["SaleChannelSysNo"] = kjt_saleschannelsysno;
     QJsonDocument jsonDoc(json);
     qDebug() << jsonDoc.toJson(QJsonDocument::Compact);
 
