@@ -111,14 +111,14 @@ void InventoryChannelQ4SBatchGet::sReplyFinished(QNetworkReply *reply)
         if ("0" == code)
         {
             QJsonArray dataArray = json.value("Data").toArray();
-            QJsonDocument jsonDoc(json);
-            QFile file("data.txt");
-            if (file.open(QIODevice::WriteOnly))
-            {
-                QTextStream out(&file);
-                out << jsonDoc.toJson(QJsonDocument::Compact);
-                file.close();
-            }
+//            QJsonDocument jsonDoc(json);
+//            QFile file("data.txt");
+//            if (file.open(QIODevice::WriteOnly))
+//            {
+//                QTextStream out(&file);
+//                out << jsonDoc.toJson(QJsonDocument::Compact);
+//                file.close();
+//            }
 //            QJsonArray productListArray = data.value("ItemList").toArray();
             for (int i = 0; i < dataArray.size(); i++)
                 insertItem2ERPByJson(dataArray.at(i).toObject());
@@ -328,10 +328,10 @@ void InventoryChannelQ4SBatchGet::insertItem2ERPByJson(const QJsonObject &json)
         {
             QSqlQuery queryUpdate;
             queryUpdate.prepare("update 仓库库存 set "
-                                "库存数量=:onlineQty, 仓库ID=:wareHouseID "
+                                "库存数量=:onlineQty, 仓库ID=:wareHouseIDLocal "
                                 "where 商品ID=:productIdLocal");
             queryUpdate.bindValue(":onlineQty", onlineQty);
-            queryUpdate.bindValue(":wareHouseID", wareHouseID);
+            queryUpdate.bindValue(":wareHouseIDLocal", wareHouseIDLocal);
 
             queryUpdate.bindValue(":productIdLocal", productIdLocal);
 
@@ -347,11 +347,11 @@ void InventoryChannelQ4SBatchGet::insertItem2ERPByJson(const QJsonObject &json)
             queryInsert.prepare("insert into 仓库库存( "
                                 "商品ID, 库存数量, 仓库ID "
                                 ") values ("
-                                ":productIdLocal, :onlineQty, :wareHouseID "
+                                ":productIdLocal, :onlineQty, :wareHouseIDLocal "
                                 ")");
             queryInsert.bindValue(":productIdLocal", productIdLocal);
             queryInsert.bindValue(":onlineQty", onlineQty);
-            queryInsert.bindValue(":wareHouseID", wareHouseID);
+            queryInsert.bindValue(":wareHouseIDLocal", wareHouseIDLocal);
 
             if (!queryInsert.exec())
             {
