@@ -72,6 +72,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->pushButton_4->hide();
     ui->pushButton_7->hide();
     ui->pushButton_5->hide();
+    ui->btnDownloadProduct->hide();
+    ui->btnDownloadProductPrice->hide();
 }
 
 MainWindow::~MainWindow()

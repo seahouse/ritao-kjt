@@ -1,6 +1,7 @@
 #include "productdownload.h"
 
 #include "global.h"
+#include "inventorychannelq4sbatchget.h"
 
 #include <QSqlQuery>
 #include <QSqlError>
@@ -26,6 +27,9 @@ ProductDownload::ProductDownload(QObject *parent) : QObject(parent),
 
     _manager = new QNetworkAccessManager;
     connect(_manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(sReplyFinished(QNetworkReply*)));
+
+    _inventoryChannelQ4SBatchGet = new InventoryChannelQ4SBatchGet;
+    connect(_inventoryChannelQ4SBatchGet, SIGNAL(finished(bool,QString)), this, SLOT(sInventoryChannelQ4SBatchGetFinished(bool, QString)));
 }
 
 void ProductDownload::download()
@@ -49,7 +53,8 @@ void ProductDownload::sTimeout()
         downloadNextProducts();
         break;
     case OTProductDownloadEnd:
-        emit finished(_phData._success, _phData._msgList.join("\r\n"));
+        _inventoryChannelQ4SBatchGet->download();
+//        emit finished(_phData._success, _phData._msgList.join("\r\n"));
         break;
     case OTProductDownloadError:
         emit finished(false, _msg);
@@ -76,6 +81,7 @@ void ProductDownload::sReplyFinished(QNetworkReply *reply)
             _phData._total = data.value("Total").toInt();
             QJsonArray productListArray = data.value("ProductList").toArray();
             QList<ProductSummary> productList;
+            QList<QString> productIdList;
             for (int i = 0; i < productListArray.size(); i++)
             {
                 QJsonObject productObject = productListArray.at(i).toObject();
@@ -84,11 +90,13 @@ void ProductDownload::sReplyFinished(QNetworkReply *reply)
                                        productObject.value("Status").toInt(),
                                        QDateTime::fromString(productObject.value("ChangeDate").toString())
                                        ));
+                productIdList.append(productObject.value("ProductID").toString());
             }
             _phData._productList = productList;
             _phData._currentIndex = 0;
             qDebug() << "total count:" << _phData._total;
 
+            _inventoryChannelQ4SBatchGet->setProductIdList(productIdList);
             _optType = OTProductDownloading;
             _timer->start(1000);
         }
@@ -104,14 +112,14 @@ void ProductDownload::sReplyFinished(QNetworkReply *reply)
         if ("0" == code)
         {
             QJsonObject data = json.value("Data").toObject();
-            QJsonDocument jsonDoc(json);
-            QFile file("data.txt");
-            if (file.open(QIODevice::WriteOnly))
-            {
-                QTextStream out(&file);
-                out << jsonDoc.toJson(QJsonDocument::Compact);
-                file.close();
-            }
+//            QJsonDocument jsonDoc(json);
+//            QFile file("data.txt");
+//            if (file.open(QIODevice::WriteOnly))
+//            {
+//                QTextStream out(&file);
+//                out << jsonDoc.toJson(QJsonDocument::Compact);
+//                file.close();
+//            }
             QJsonArray productListArray = data.value("ProductList").toArray();
             for (int i = 0; i < productListArray.size(); i++)
                 insertProduct2ERPByJson(productListArray.at(i).toObject());
@@ -123,6 +131,18 @@ void ProductDownload::sReplyFinished(QNetworkReply *reply)
     }
 
     qInfo() << opt << code << desc;
+}
+
+void ProductDownload::sInventoryChannelQ4SBatchGetFinished(bool success, const QString &msg)
+{
+    if (!success)
+    {
+        qInfo() << "下载库存失败: " + msg;
+        _phData._success = false;
+        _phData._msgList.append(msg);
+    }
+
+    emit finished(_phData._success, _phData._msgList.join("\r\n"));
 }
 
 void ProductDownload::downloadProductIdList()
@@ -267,6 +287,7 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
 {
     QString productId = json.value("ProductID").toString();             // ProductID
     int categoryID = json.value("CategoryID").toInt();                  // 商品类别ID
+
     QString categoryName = json.value("CategoryName").toString();       // 商品类别名称
     QString productName = json.value("ProductName").toString();         // 商品名称
     QString briefName = json.value("BriefName").toString();             // 商品简称
@@ -341,7 +362,9 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
                             "p35=:attention, p7=:vendorID, p37=:vendorName, 商品品牌ID=:brandID, 贸易类型=:productTradeType, "
                             "p5=:onlineQty, p6=:platformQty, 销售价=:price, 商品英文名称=:productName_EN, 商品规格=:specifications, "
                             "产地=:origin, 计税单位=:taxUnit, 申报单位=:applyUnit, 商品毛重=:grossWeight, 商品净重=:suttleWeight, "
-                            "商品备注=:note, p39=:originCountryName "
+                            "商品备注=:note, 商品关税=:tariffRate, p39=:originCountryName, 是否属于保税仓=:isBaoshuicang, p23=:p23, p28=:p28, "
+                            "手机端详细描述=:productDescLong2, 商品状态=:productStatus, 决策审核=:decisionreview, 自定义ID1=:customid1, 创建日期=:createDate, "
+                            "p22=:productId3, p8=:storeSysNo "
                             "where p31=:productId");
         queryUpdate.bindValue(":categoryID", categoryID);
         queryUpdate.bindValue(":productName", productName);
@@ -374,8 +397,22 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
         queryUpdate.bindValue(":suttleWeight", suttleWeight);
 
         queryUpdate.bindValue(":note", note);
+        queryUpdate.bindValue(":tariffRate", tariffRate);
         queryUpdate.bindValue(":originCountryName", originCountryName);
+        queryUpdate.bindValue(":isBaoshuicang", 1);
+        queryUpdate.bindValue(":p23", specifications);
+        queryUpdate.bindValue(":p28", productTradeType == 0 ? "直邮" : "保税");
 
+        queryUpdate.bindValue(":productDescLong2", productDescLong);
+        queryUpdate.bindValue(":productStatus", 1);
+        queryUpdate.bindValue(":decisionreview", 1);
+        queryUpdate.bindValue(":customid1", 1);
+        queryUpdate.bindValue(":createDate", QDateTime::currentDateTime());
+
+        queryUpdate.bindValue(":productId3", productId);
+        queryUpdate.bindValue(":storeSysNo", storeSysNo);
+
+        queryUpdate.bindValue(":productId", productId);
         if (!queryUpdate.exec())
         {
             qInfo() << queryUpdate.lastError().text();
@@ -393,7 +430,7 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
                             "产地, 计税单位, 申报单位, 商品毛重, 商品净重, "
                             "商品备注, 商品关税, p39, 是否属于保税仓, p23, p28,"
                             "手机端详细描述, 商品状态, 决策审核, 自定义ID1, 创建日期, "
-                            "p22 "
+                            "p22, p8 "
                             ") values ("
                             ":productId, :categoryID, :productName, :productId2, :productMode, :productDesc, "
                             ":weight, :productDescLong, :productPhotoDesc, :performance, :warranty, "
@@ -402,7 +439,7 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
                             ":origin, :taxUnit, :applyUnit, :grossWeight, :suttleWeight, "
                             ":note, :tariffRate, :originCountryName, :isBaoshuicang, :p23, :p28,"
                             ":productDescLong2, :productStatus, :decisionreview, :customid1, :createDate, "
-                            ":productId3 "
+                            ":productId3, :storeSysNo "
                             ")");
         queryInsert.bindValue(":productId", productId);
         queryInsert.bindValue(":categoryID", categoryID);
@@ -448,7 +485,9 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
         queryInsert.bindValue(":decisionreview", 1);
         queryInsert.bindValue(":customid1", 1);
         queryInsert.bindValue(":createDate", QDateTime::currentDateTime());
+
         queryInsert.bindValue(":productId3", productId);
+        queryInsert.bindValue(":storeSysNo", storeSysNo);
         if (!queryInsert.exec())
         {
             qInfo() << queryInsert.lastError().text();

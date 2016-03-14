@@ -17,7 +17,13 @@
 #define kjt_version "1.0"            // 由接口提供方指定的接口版本
 #define kjt_format "json"            // 接口返回结果类型:json
 #else
-#define kjt_url "http://preapi.kjt.com/open.api"
+#define kjt_url "http://api.kjt.com/open.api"
+#define kjt_secretkey "ecf48175ec0341a695ee938592bdfdcb"      // 由接口提供方分配给接口调用方的验签密钥
+#define kjt_appid "seller1383"        // 由接口提供方分配给接口调用方的身份标识符
+#define kjt_saleschannelsysno  "73"   // 渠道编号
+
+#define kjt_version "1.0"            // 由接口提供方指定的接口版本
+#define kjt_format "json"            // 接口返回结果类型:json
 #endif
 
 

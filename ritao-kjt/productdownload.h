@@ -8,6 +8,7 @@
 class QNetworkAccessManager;
 class QNetworkReply;
 class QTimer;
+class InventoryChannelQ4SBatchGet;
 
 class ProductDownload : public QObject
 {
@@ -54,6 +55,7 @@ signals:
 private slots:
     void sTimeout();
     void sReplyFinished(QNetworkReply *reply);
+    void sInventoryChannelQ4SBatchGetFinished(bool success, const QString &msg);
 
 private:
     void downloadProductIdList();
@@ -69,6 +71,8 @@ private:
 
     QNetworkAccessManager *_manager;
     ProductHandlerData _phData;
+
+    InventoryChannelQ4SBatchGet *_inventoryChannelQ4SBatchGet;
 };
 
 #endif // PRODUCTDOWNLOAD_H

@@ -22,7 +22,9 @@ SOURCES += main.cpp\
     productupload.cpp \
     orderdownload.cpp \
     productdownload.cpp \
-    productpricedownload.cpp
+    productpricedownload.cpp \
+    inventorychannelq4sbatchget.cpp \
+    configglobal.cpp
 
 HEADERS  += mainwindow.h \
     connection.h \
@@ -33,6 +35,8 @@ HEADERS  += mainwindow.h \
     productupload.h \
     orderdownload.h \
     productdownload.h \
-    productpricedownload.h
+    productpricedownload.h \
+    inventorychannelq4sbatchget.h \
+    configglobal.h
 
 FORMS    += mainwindow.ui
