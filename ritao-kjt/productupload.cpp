@@ -1,5 +1,8 @@
 #include "productupload.h"
 
+#include "global.h"
+#include "configglobal.h"
+
 #include <QSqlQuery>
 #include <QVariant>
 #include <QDebug>
@@ -14,7 +17,6 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 
-#include "global.h"
 
 ProductUpload::ProductUpload(QObject *parent) : QObject(parent)
 {
@@ -189,12 +191,12 @@ void ProductUpload::uploadNextProduct()
 
         urlencodePercentConvert(params);
         qDebug() << params;
-        QString sign = QCryptographicHash::hash(QString(params + kjt_secretkey).toLatin1(), QCryptographicHash::Md5).toHex();
+        QString sign = QCryptographicHash::hash(QString(params + g_config.kjtSecretkey()).toLatin1(), QCryptographicHash::Md5).toHex();
         params.append("sign=").append(sign);
         qDebug() << sign;
 
         QNetworkRequest req;
-        req.setUrl(QUrl(kjt_url));
+        req.setUrl(QUrl(g_config.kjtUrl()));
         req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
         _manager->post(req, params.toLatin1());
     }

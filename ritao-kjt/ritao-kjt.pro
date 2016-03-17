@@ -24,7 +24,8 @@ SOURCES += main.cpp\
     productdownload.cpp \
     productpricedownload.cpp \
     inventorychannelq4sbatchget.cpp \
-    configglobal.cpp
+    configglobal.cpp \
+    kjtsynchronize.cpp
 
 HEADERS  += mainwindow.h \
     connection.h \
@@ -37,6 +38,7 @@ HEADERS  += mainwindow.h \
     productdownload.h \
     productpricedownload.h \
     inventorychannelq4sbatchget.h \
-    configglobal.h
+    configglobal.h \
+    kjtsynchronize.h
 
 FORMS    += mainwindow.ui

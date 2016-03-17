@@ -1,6 +1,7 @@
 #include "orderdownload.h"
 
 #include "global.h"
+#include "configglobal.h"
 
 #include <QSqlQuery>
 #include <QSqlError>
@@ -143,6 +144,7 @@ void OrderDownload::downloadOrderIdList()
     qDebug() << dateStart;
     _ohData._dateStart = dateStart;
     _ohData._dateEnd = QDateTime::currentDateTime();
+//    _ohData._dateEnd = QDateTime(QDate(2016, 3, 15), QTime(11, 0, 0));  // test
 
     QJsonObject json;
     json["OrderDateBegin"] = dateStart.toString("yyyy-MM-dd hh:mm:ss");
@@ -167,13 +169,13 @@ void OrderDownload::downloadOrderIdList()
         params.append(i.key()).append("=").append(i.value().toUtf8().toPercentEncoding()).append("&");
     }
 
-    params.append(kjt_secretkey);
+    params.append(g_config.kjtSecretkey());
     urlencodePercentConvert(params);
     qDebug() << params;
     QString sign = QCryptographicHash::hash(params.toLatin1(), QCryptographicHash::Md5).toHex();
 
     QString url;
-    url.append(kjt_url).append("?").append(params).append("&sign=").append(sign);
+    url.append(g_config.kjtUrl()).append("?").append(params).append("&sign=").append(sign);
 
     qDebug() << url;
     _manager->get(QNetworkRequest(QUrl(url)));
@@ -225,13 +227,13 @@ void OrderDownload::downloadNextOrders()
         params.append(i.key()).append("=").append(i.value().toUtf8().toPercentEncoding()).append("&");
     }
 
-    params.append(kjt_secretkey);
+    params.append(g_config.kjtSecretkey());
     urlencodePercentConvert(params);
     qDebug() << params;
     QString sign = QCryptographicHash::hash(params.toLatin1(), QCryptographicHash::Md5).toHex();
 
     QString url;
-    url.append(kjt_url).append("?").append(params).append("&sign=").append(sign);
+    url.append(g_config.kjtUrl()).append("?").append(params).append("&sign=").append(sign);
 
     qDebug() << url;
     _manager->get(QNetworkRequest(QUrl(url)));

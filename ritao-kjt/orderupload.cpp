@@ -1,6 +1,7 @@
 #include "orderupload.h"
 
 #include "global.h"
+#include "configglobal.h"
 
 #include <QSqlQuery>
 #include <QSqlError>
@@ -98,7 +99,7 @@ void OrderUpload::uploadNextOrder()
 
         QJsonObject json;
 
-        json["SaleChannelSysNo"] = kjt_saleschannelsysno;                // 渠道编号
+        json["SaleChannelSysNo"] = g_config.kjtSaleschannelsysno();                // 渠道编号
         _ohData._currentOrderNumber = query.value(tr("订单号")).toString();
         json["MerchantOrderID"] = _ohData._currentOrderNumber;
 
@@ -197,11 +198,11 @@ void OrderUpload::uploadNextOrder()
 
         urlencodePercentConvert(params);
         qDebug() << params;
-        QString sign = QCryptographicHash::hash(QString(params + kjt_secretkey).toLatin1(), QCryptographicHash::Md5).toHex();
+        QString sign = QCryptographicHash::hash(QString(params + g_config.kjtSecretkey()).toLatin1(), QCryptographicHash::Md5).toHex();
         params.append("sign=").append(sign);
 
         QNetworkRequest req;
-        req.setUrl(QUrl(kjt_url));
+        req.setUrl(QUrl(g_config.kjtUrl()));
         req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
         _manager->post(req, params.toLatin1());
     }
@@ -236,7 +237,7 @@ void OrderUpload::outputSOWarehouse()
     }
 
     qDebug() << params;
-    QString sign = QCryptographicHash::hash(QString(params + kjt_secretkey).toLatin1(), QCryptographicHash::Md5).toHex();
+    QString sign = QCryptographicHash::hash(QString(params + g_config.kjtSecretkey()).toLatin1(), QCryptographicHash::Md5).toHex();
     params.append("sign=").append(sign);
 
     QNetworkRequest req;

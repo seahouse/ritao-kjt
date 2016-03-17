@@ -2,6 +2,7 @@
 
 #include "global.h"
 #include "rnetworkaccessmanager.h"
+#include "configglobal.h"
 
 #include <QDateTime>
 #include <QJsonObject>
@@ -40,13 +41,13 @@ void OrderCreateKJTToERP::run(const QDateTime &dateTimeStart, const QDateTime &d
         params.append(i.key()).append("=").append(i.value().toUtf8().toPercentEncoding()).append("&");
     }
 
-    params.append(kjt_secretkey);
+    params.append(g_config.kjtSecretkey());
     urlencodePercentConvert(params);
     qDebug() << params;
     QString sign = QCryptographicHash::hash(params.toLatin1(), QCryptographicHash::Md5).toHex();
 
     QString url;
-    url.append(kjt_url).append("?").append(params).append("&sign=").append(sign);
+    url.append(g_config.kjtUrl()).append("?").append(params).append("&sign=").append(sign);
 
     qDebug() << url;
 //    g_networkManager.get(QNetworkRequest(QUrl(url)));

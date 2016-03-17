@@ -7,6 +7,7 @@
 #include "productupload.h"
 #include "productdownload.h"
 #include "productpricedownload.h"
+#include "configglobal.h"
 
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
@@ -39,9 +40,9 @@ MainWindow::MainWindow(QWidget *parent) :
     _timer = new QTimer;
     connect(_timer, SIGNAL(timeout()), this, SLOT(sTimeout()));
 
-    g_paramsMap["appid"] = kjt_appid;
-    g_paramsMap["version"] = kjt_version;               // 由接口提供方指定的接口版本
-    g_paramsMap["format"] = kjt_format;               // 接口返回结果类型:json
+    g_paramsMap["appid"] = g_config.kjtAppid();
+    g_paramsMap["version"] = g_config.kjtVersion();               // 由接口提供方指定的接口版本
+    g_paramsMap["format"] = g_config.kjtFormat();               // 接口返回结果类型:json
 
 //    _orderCreateKJTToERP = new OrderCreateKJTToERP();
 //    connect(_orderCreateKJTToERP, SIGNAL(finished(bool,QString)), this, SLOT(sOrderCreateKJTToERPFinished(bool, QString)));
@@ -70,7 +71,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->pushButton_6->hide();
     ui->pushButton_4->hide();
-    ui->pushButton_7->hide();
+//    ui->pushButton_7->hide();
     ui->pushButton_5->hide();
     ui->btnDownloadProduct->hide();
     ui->btnDownloadProductPrice->hide();
@@ -110,7 +111,7 @@ void MainWindow::on_pushButton_clicked()
     QJsonArray jsonArray;
     jsonArray.append(QJsonValue("345JPA018400002"));
     json["ProductIDs"] = jsonArray;
-    json["SaleChannelSysNo"] = kjt_saleschannelsysno;
+    json["SaleChannelSysNo"] = g_config.kjtSaleschannelsysno();
     QJsonDocument jsonDoc(json);
     qDebug() << jsonDoc.toJson(QJsonDocument::Compact);
 
@@ -370,13 +371,13 @@ void MainWindow::orderInfoBatchGet()
         params.append(i.key()).append("=").append(i.value().toUtf8().toPercentEncoding()).append("&");
     }
 
-    params.append(kjt_secretkey);
+    params.append(g_config.kjtSecretkey());
     urlencodePercentConvert(params);
     qDebug() << params;
     QString sign = QCryptographicHash::hash(params.toLatin1(), QCryptographicHash::Md5).toHex();
 
     QString url;
-    url.append(kjt_url).append("?").append(params).append("&sign=").append(sign);
+    url.append(g_config.kjtUrl()).append("?").append(params).append("&sign=").append(sign);
 
     qDebug() << url;
     _manager->get(QNetworkRequest(QUrl(url)));
@@ -487,13 +488,13 @@ void MainWindow::on_pushButton_3_clicked()
         params.append(i.key()).append("=").append(i.value().toUtf8().toPercentEncoding()).append("&");
     }
 
-    params.append(kjt_secretkey);
+    params.append(g_config.kjtSecretkey());
     urlencodePercentConvert(params);
     qDebug() << params;
     QString sign = QCryptographicHash::hash(params.toLatin1(), QCryptographicHash::Md5).toHex();
 
     QString url;
-    url.append(kjt_url).append("?").append(params).append("&sign=").append(sign);
+    url.append(g_config.kjtUrl()).append("?").append(params).append("&sign=").append(sign);
 
     qDebug() << url;
     _manager->get(QNetworkRequest(QUrl(url)));
@@ -785,7 +786,6 @@ void MainWindow::output(const QString &msg, MsgType type)
 void MainWindow::on_pushButton_4_clicked()
 {
     _synchronizeType = STOrderUpload;
-//    _productIdQueue.clear();
 
     _orderUpload->upload();
 

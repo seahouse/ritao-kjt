@@ -1,6 +1,7 @@
 #include "inventorychannelq4sbatchget.h"
 
 #include "global.h"
+#include "configglobal.h"
 
 #include <QSqlQuery>
 #include <QSqlError>
@@ -215,7 +216,7 @@ void InventoryChannelQ4SBatchGet::downloadNextItems()
     }
     _hData._currentIndex += 20;
     json["ProductIDs"] = productIdList.join(',');
-    json["SaleChannelSysNo"] = kjt_saleschannelsysno;
+    json["SaleChannelSysNo"] = g_config.kjtSaleschannelsysno();
     QJsonDocument jsonDoc(json);
 //    QFile file("11.txt");
 //    if (file.open(QIODevice::WriteOnly))
@@ -237,13 +238,13 @@ void InventoryChannelQ4SBatchGet::downloadNextItems()
         params.append(i.key()).append("=").append(i.value().toUtf8().toPercentEncoding()).append("&");
     }
 
-    params.append(kjt_secretkey);
+    params.append(g_config.kjtSecretkey());
     urlencodePercentConvert(params);
     qDebug() << params;
     QString sign = QCryptographicHash::hash(params.toLatin1(), QCryptographicHash::Md5).toHex();
 
     QString url;
-    url.append(kjt_url).append("?").append(params).append("&sign=").append(sign);
+    url.append(g_config.kjtUrl()).append("?").append(params).append("&sign=").append(sign);
 
     qDebug() << url;
     _manager->get(QNetworkRequest(QUrl(url)));

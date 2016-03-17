@@ -15,12 +15,12 @@ static bool createConnection()
     {
         db = QSqlDatabase::addDatabase("QODBC");
 #ifndef QT_NO_DEBUG
-//        db.setDatabaseName("DRIVER={SQL SERVER};SERVER=localhost;DATABASE=dayamoy;");
-//        db.setUserName("sa");
-//        db.setPassword("liangyi0328");
-        db.setDatabaseName("DRIVER={SQL SERVER};SERVER=120.55.165.90,9001;DATABASE=dayamoy;");
-        db.setUserName("dayamoyadmin");
-        db.setPassword("dayamoyadmin2015");
+        db.setDatabaseName("DRIVER={SQL SERVER};SERVER=localhost;DATABASE=dayamoy;");
+        db.setUserName("sa");
+        db.setPassword("liangyi0328");
+//        db.setDatabaseName("DRIVER={SQL SERVER};SERVER=120.55.165.90,9001;DATABASE=dayamoy;");
+//        db.setUserName("dayamoyadmin");
+//        db.setPassword("dayamoyadmin2015");
 #else
         db.setDatabaseName("DRIVER={SQL SERVER};SERVER=120.55.165.90,9001;DATABASE=dayamoy;");
         db.setUserName("dayamoyadmin");

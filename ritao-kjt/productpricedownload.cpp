@@ -1,6 +1,7 @@
 #include "productpricedownload.h"
 
 #include "global.h"
+#include "configglobal.h"
 
 #include <QSqlQuery>
 #include <QSqlError>
@@ -140,7 +141,7 @@ void ProductPriceDownload::downloadProductIdList()
     _phData._dateEnd = QDateTime::currentDateTime();
 
     QJsonObject json;
-    json["SaleChannelSysNo"] = kjt_saleschannelsysno;
+    json["SaleChannelSysNo"] = g_config.kjtSaleschannelsysno();
     json["ChangedDateBegin"] = dateStart.toString("yyyy-MM-dd hh:mm:ss");
     json["ChangedDateEnd"] = _phData._dateEnd.toString("yyyy-MM-dd hh:mm:ss");
     QJsonDocument jsonDoc(json);
@@ -163,13 +164,13 @@ void ProductPriceDownload::downloadProductIdList()
         params.append(i.key()).append("=").append(i.value().toUtf8().toPercentEncoding()).append("&");
     }
 
-    params.append(kjt_secretkey);
+    params.append(g_config.kjtSecretkey());
     urlencodePercentConvert(params);
     qDebug() << params;
     QString sign = QCryptographicHash::hash(params.toLatin1(), QCryptographicHash::Md5).toHex();
 
     QString url;
-    url.append(kjt_url).append("?").append(params).append("&sign=").append(sign);
+    url.append(g_config.kjtUrl()).append("?").append(params).append("&sign=").append(sign);
 
     qDebug() << url;
     _manager->get(QNetworkRequest(QUrl(url)));
@@ -200,7 +201,7 @@ void ProductPriceDownload::downloadNextProducts()
     }
     _phData._currentIndex += 5;
     json["ProductIDs"] = productIdListArray;
-    json["SaleChannelSysNo"] = kjt_saleschannelsysno;
+    json["SaleChannelSysNo"] = g_config.kjtSaleschannelsysno();
     QJsonDocument jsonDoc(json);
 //    QFile file("11.txt");
 //    if (file.open(QIODevice::WriteOnly))
@@ -222,13 +223,13 @@ void ProductPriceDownload::downloadNextProducts()
         params.append(i.key()).append("=").append(i.value().toUtf8().toPercentEncoding()).append("&");
     }
 
-    params.append(kjt_secretkey);
+    params.append(g_config.kjtSecretkey());
     urlencodePercentConvert(params);
     qDebug() << params;
     QString sign = QCryptographicHash::hash(params.toLatin1(), QCryptographicHash::Md5).toHex();
 
     QString url;
-    url.append(kjt_url).append("?").append(params).append("&sign=").append(sign);
+    url.append(g_config.kjtUrl()).append("?").append(params).append("&sign=").append(sign);
 
     qDebug() << url;
     _manager->get(QNetworkRequest(QUrl(url)));
