@@ -31,4 +31,5 @@ void ConfigGlobal::read(const QJsonObject &json)
     _kjtSaleschannelsysno = json.value("kjtSaleschannelsysno").toString();
     _kjtVersion = json.value("kjtVersion").toString();
     _kjtFormat = json.value("kjtFormat").toString();
+    _intervalMinutes = json.value("intervalMinutes").toInt(30);
 }

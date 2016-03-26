@@ -71,10 +71,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->pushButton_6->hide();
     ui->pushButton_4->hide();
-//    ui->pushButton_7->hide();
+    ui->pushButton_7->hide();
     ui->pushButton_5->hide();
     ui->btnDownloadProduct->hide();
     ui->btnDownloadProductPrice->hide();
+    ui->pushButton_8->hide();
 }
 
 MainWindow::~MainWindow()
@@ -859,7 +860,43 @@ void MainWindow::sOrderDownloadFinished(bool success, const QString &msg)
 
     _synchronizeType = STNone;
     ui->pbnStart->setEnabled(true);
-    _timer->start(1800000);     // 30分钟
+    _timer->start(g_config.intervalMinutes() * 60 * 1000);     // 30分钟
 }
 
 
+
+void MainWindow::on_pushButton_8_clicked()
+{
+//    QString url = "http://localhost:1517/testYY.aspx";
+
+//    QMap<QString, QString> paramsMap(g_paramsMap);
+
+//    QJsonObject json;
+//    json["CustomerName"] = "无锡益多环保热电有限公司";
+//    json["ProjectName"] = "无锡益多500t/d垃圾焚烧炉尾气处理系统";
+//    json["HappenDate"] = "2016-03-21 15:53";
+//    json["Amount"] = 20.0;
+//    json["Attn"] = "吴福本";
+//    json["Remark"] = "";
+//    json["CreateDate"] = "2016-03-22 15:53";
+
+//    QJsonDocument jsonDoc(json);
+//    paramsMap["data"] = jsonDoc.toJson(QJsonDocument::Compact);
+
+//    QString params;
+//    QMapIterator<QString, QString> i(paramsMap);
+//    while (i.hasNext())
+//    {
+//        i.next();
+//        params.append(i.key()).append("=").append(i.value().toLatin1().toPercentEncoding()).append("&");
+//    }
+
+//    qDebug() << params;
+//    QString sign = QCryptographicHash::hash(QString(params + g_config.kjtSecretkey()).toLatin1(), QCryptographicHash::Md5).toHex();
+//    params.append("sign=").append(sign);
+
+//    QNetworkRequest req;
+//    req.setUrl(QUrl(url));
+//    req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+//    _manager->post(req, jsonDoc.toJson(QJsonDocument::Compact));
+}

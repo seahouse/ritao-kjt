@@ -114,6 +114,8 @@ private slots:
     void sDownloadProductPrice();
     void sProductDownloadPriceFinished(bool success, const QString &msg);
 
+    void on_pushButton_8_clicked();
+
 private:
     void synchronizeProductCreate();                        // 同步商品: 将ERP商品上传到跨境通
     void orderInfoBatchGet();
