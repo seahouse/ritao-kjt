@@ -289,7 +289,7 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
     QString productId = json.value("ProductID").toString();             // ProductID
     int categoryID = json.value("CategoryID").toInt();                  // 商品类别ID
     /// 获取ERP中的类别ID
-    int categoryIDERP = 0;
+    int categoryIDERP = 251;        // 默认：其他类别
     QSqlQuery querycategoryIDERP;
     querycategoryIDERP.prepare(tr("select 商品分类KID from 商品分类 where 跨境通分类编码=:categoryID"));
     querycategoryIDERP.bindValue(":categoryID", QString::number(categoryID));
@@ -314,7 +314,7 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
     QString vendorName = json.value("VendorName").toString();           // 供应商名称
     int brandID = json.value("BrandID").toInt();                        // 品牌编号
     /// 获取ERP中的品牌ID
-    int brandIDERP = 0;
+    int brandIDERP = 170;       // 默认：其他品牌
     QSqlQuery querybrandIDERP;
     querybrandIDERP.prepare(tr("select 商品品牌KID from 商品品牌 where 跨境通品牌编码=:brandID"));
     querybrandIDERP.bindValue(":brandID", QString::number(brandID));

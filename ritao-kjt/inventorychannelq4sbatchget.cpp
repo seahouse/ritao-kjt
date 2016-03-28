@@ -279,15 +279,15 @@ void InventoryChannelQ4SBatchGet::insertItem2ERPByJson(const QJsonObject &json)
 
 
 
-
     qDebug() << productId << onlineQty << wareHouseID;
 //    if (productId == "032JPH027440001")
 //        int iii = 0;
 
-    /// 获取erp的商品id
+    /// 获取erp的商品id与贸易类型
     int productIdLocal = 0;     // 本地的商品id
+    int productTradeType = 1;   // 贸易类型。 0 = 直邮，1 = 自贸（保税）
     QSqlQuery query;
-    query.prepare(tr("select 商品KID from 商品 where p31=:productId"));
+    query.prepare(tr("select 商品KID, 贸易类型 from 商品 where p31=:productId"));
     query.bindValue(":productId", productId);
     if (!query.exec())
     {
@@ -296,13 +296,19 @@ void InventoryChannelQ4SBatchGet::insertItem2ERPByJson(const QJsonObject &json)
         return;
     }
     if (query.first())
-        productIdLocal = query.value(0).toInt();
+    {
+        productIdLocal = query.value("商品KID").toInt();
+        productTradeType = query.value("贸易类型").toInt();
+    }
 
     /// 获取erp的仓库ID
     int wareHouseIDLocal = 0;     // 本地的仓库ID
+    /// 直邮，仓库类型为3；保税，仓库类型为1
+    int wareHouseType = (productTradeType == 0 ? 3 : 1);
 //    QSqlQuery query;
-    query.prepare(tr("select 仓库KID from 仓库 where 仓库编号=:wareHouseID"));
+    query.prepare(tr("select 仓库KID from 仓库 where 仓库编号=:wareHouseID and 仓库类别=:wareHouseType"));
     query.bindValue(":wareHouseID", QString::number(wareHouseID));
+    query.bindValue(":wareHouseType", QString::number(wareHouseType));
     if (!query.exec())
     {
         qInfo() << query.lastError().text();
