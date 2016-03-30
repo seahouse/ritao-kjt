@@ -25,7 +25,7 @@ public:
     struct OrderHandlerData
     {
         int _currentOrderId;
-        QString _currentOrderNumber;
+        QString _currentOrderNumber;        
     };
 
 public:
@@ -55,6 +55,7 @@ private:
 
     QNetworkAccessManager *_manager;
     OrderHandlerData _ohData;
+    bool _success;                      // 是否处理成功
 };
 
 #endif // ORDERUPLOAD_H

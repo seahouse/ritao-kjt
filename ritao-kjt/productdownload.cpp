@@ -287,6 +287,8 @@ void ProductDownload::setProductGetFromKJTTime()
 void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
 {
     QString productId = json.value("ProductID").toString();             // ProductID
+    if (productId == "B43JPB03z840001")
+        int iii = 0;
     int categoryID = json.value("CategoryID").toInt();                  // 商品类别ID
     /// 获取ERP中的类别ID
     int categoryIDERP = 251;        // 默认：其他类别
@@ -353,7 +355,7 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
 
 
     qDebug() << productId << productName;
-    if (productId == "032JPH027440001")
+    if (productId == "B43JPB03z840001")
         int iii = 0;
 
     /// 仅下载付款后，待出库的订单
@@ -435,7 +437,7 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
         queryUpdate.bindValue(":productId", productId);
         if (!queryUpdate.exec())
         {
-            qInfo() << queryUpdate.lastError().text();
+            qInfo() << "更新商品" + productId + "错误：" << queryUpdate.lastError().text();
             _phData._success = false;
         }
     }
@@ -514,7 +516,7 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
         queryInsert.bindValue(":brandName", brandName);
         if (!queryInsert.exec())
         {
-            qInfo() << queryInsert.lastError().text();
+            qInfo() << "下载商品" + productId + "错误：" << queryInsert.lastError().text();
             _phData._success = false;
         }
     }

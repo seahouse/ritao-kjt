@@ -20,7 +20,8 @@
 #include <QFile>
 
 OrderUpload::OrderUpload(QObject *parent) : QObject(parent),
-    _optType(OTNone)
+    _optType(OTNone),
+    _success(true)
 {
     _timer = new QTimer;
     connect(_timer, SIGNAL(timeout()), this, SLOT(sTimeout()));
@@ -55,10 +56,10 @@ void OrderUpload::sTimeout()
         uploadNextOrder();
         break;
     case OTOrderUploadEnd:
-        emit finished(true, tr("上传订单结束。"));
+        emit finished(_success, tr("上传订单结束。"));
         break;
     case OTOrderUploadError:
-        emit finished(false, _msg);
+        emit finished(_success, _msg);
         break;
     default:
         break;
@@ -82,6 +83,7 @@ void OrderUpload::uploadNextOrder()
     query.bindValue(":id", _ohData._currentOrderId);
     if (!query.exec())
     {
+        _success = false;
 //        _optType = OTOrderUploadError;
 //        _msg = tr("订单");
 //        qFatal(query.lastError().text().toStdString().c_str());
@@ -206,6 +208,12 @@ void OrderUpload::uploadNextOrder()
         req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
         _manager->post(req, params.toLatin1());
     }
+    else
+    {
+        _success = false;
+        qInfo() << "上传的订单（id: " + QString::number(_ohData._currentOrderId) + "）不存在";
+        uploadNextOrder();
+    }
 }
 
 void OrderUpload::outputSOWarehouse()
@@ -291,6 +299,7 @@ void OrderUpload::sReplyFinished(QNetworkReply *reply)
         }
         else
         {
+            _success = false;
             _optType = OTOrderUploadError;
             _msg = tr("上传订单错误：") + desc;
             _timer->start(1000);

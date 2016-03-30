@@ -75,7 +75,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->pushButton_5->hide();
     ui->btnDownloadProduct->hide();
     ui->btnDownloadProductPrice->hide();
+#ifndef QT_NO_DEBUG
+#else
     ui->pushButton_8->hide();
+#endif
 }
 
 MainWindow::~MainWindow()
@@ -867,36 +870,37 @@ void MainWindow::sOrderDownloadFinished(bool success, const QString &msg)
 
 void MainWindow::on_pushButton_8_clicked()
 {
-//    QString url = "http://localhost:1517/testYY.aspx";
+    QString url = "http://61.160.68.62:2015/ReceivablesAdd.aspx";
+//    QString url = "http://localhost:1517/ReceivablesAdd.aspx";
 
-//    QMap<QString, QString> paramsMap(g_paramsMap);
+    QMap<QString, QString> paramsMap(g_paramsMap);
 
-//    QJsonObject json;
-//    json["CustomerName"] = "无锡益多环保热电有限公司";
-//    json["ProjectName"] = "无锡益多500t/d垃圾焚烧炉尾气处理系统";
-//    json["HappenDate"] = "2016-03-21 15:53";
-//    json["Amount"] = 20.0;
-//    json["Attn"] = "吴福本";
-//    json["Remark"] = "";
-//    json["CreateDate"] = "2016-03-22 15:53";
+    QJsonObject json;
+    json["CustomerName"] = "无锡益多环保热电有限公司";
+    json["ProjectName"] = "无锡益多500t/d垃圾焚烧炉尾气处理系统";
+    json["HappenDate"] = "2016-03-21 15:53";
+    json["Amount"] = 20.0;
+    json["Attn"] = "吴才本";
+    json["Remark"] = "";
+    json["CreateDate"] = "2016-03-22 15:53";
 
-//    QJsonDocument jsonDoc(json);
-//    paramsMap["data"] = jsonDoc.toJson(QJsonDocument::Compact);
+    QJsonDocument jsonDoc(json);
+    paramsMap["data"] = jsonDoc.toJson(QJsonDocument::Compact);
 
-//    QString params;
-//    QMapIterator<QString, QString> i(paramsMap);
-//    while (i.hasNext())
-//    {
-//        i.next();
-//        params.append(i.key()).append("=").append(i.value().toLatin1().toPercentEncoding()).append("&");
-//    }
+    QString params;
+    QMapIterator<QString, QString> i(paramsMap);
+    while (i.hasNext())
+    {
+        i.next();
+        params.append(i.key()).append("=").append(i.value().toLatin1().toPercentEncoding()).append("&");
+    }
 
-//    qDebug() << params;
-//    QString sign = QCryptographicHash::hash(QString(params + g_config.kjtSecretkey()).toLatin1(), QCryptographicHash::Md5).toHex();
-//    params.append("sign=").append(sign);
+    qDebug() << params;
+    QString sign = QCryptographicHash::hash(QString(params + g_config.kjtSecretkey()).toLatin1(), QCryptographicHash::Md5).toHex();
+    params.append("sign=").append(sign);
 
-//    QNetworkRequest req;
-//    req.setUrl(QUrl(url));
-//    req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-//    _manager->post(req, jsonDoc.toJson(QJsonDocument::Compact));
+    QNetworkRequest req;
+    req.setUrl(QUrl(url));
+    req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+    _manager->post(req, jsonDoc.toJson(QJsonDocument::Compact));
 }
