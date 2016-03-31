@@ -291,13 +291,20 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
         int iii = 0;
     int categoryID = json.value("CategoryID").toInt();                  // 商品类别ID
     /// 获取ERP中的类别ID
-    int categoryIDERP = 251;        // 默认：其他类别
+    int categoryIDERP = 0;
     QSqlQuery querycategoryIDERP;
     querycategoryIDERP.prepare(tr("select 商品分类KID from 商品分类 where 跨境通分类编码=:categoryID"));
     querycategoryIDERP.bindValue(":categoryID", QString::number(categoryID));
     if (querycategoryIDERP.exec())
         if (querycategoryIDERP.first())
             categoryIDERP = querycategoryIDERP.value("商品分类KID").toInt();
+    if (categoryIDERP < 1)
+    {
+        querycategoryIDERP.prepare("select top 1 商品分类KID from 商品分类 where 商品分类名称 like '%其它%'");
+        if (querycategoryIDERP.exec())
+            if (querycategoryIDERP.first())
+                categoryIDERP = querycategoryIDERP.value("商品分类KID").toInt();
+    }
     QString categoryName = json.value("CategoryName").toString();       // 商品类别名称
     QString productName = json.value("ProductName").toString();         // 商品名称
     QString briefName = json.value("BriefName").toString();             // 商品简称
@@ -316,13 +323,20 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
     QString vendorName = json.value("VendorName").toString();           // 供应商名称
     int brandID = json.value("BrandID").toInt();                        // 品牌编号
     /// 获取ERP中的品牌ID
-    int brandIDERP = 170;       // 默认：其他品牌
+    int brandIDERP = 0;
     QSqlQuery querybrandIDERP;
     querybrandIDERP.prepare(tr("select 商品品牌KID from 商品品牌 where 跨境通品牌编码=:brandID"));
     querybrandIDERP.bindValue(":brandID", QString::number(brandID));
     if (querybrandIDERP.exec())
         if (querybrandIDERP.first())
             brandIDERP = querybrandIDERP.value("商品品牌KID").toInt();
+    if (brandIDERP < 1)
+    {
+        querybrandIDERP.prepare("select 商品品牌KID from 商品品牌 where 品牌名称 like '%其它%'");
+        if (querybrandIDERP.exec())
+            if (querybrandIDERP.first())
+                brandIDERP = querybrandIDERP.value("商品品牌KID").toInt();
+    }
     QString brandName = json.value("BrandName").toString();             // 品牌名称
     int productTradeType = json.value("ProductTradeType").toInt();      // 贸易类型：0 = 直邮, 1 = 自贸
     int onlineQty = json.value("OnlineQty").toInt();                    // 渠道独占库存
@@ -375,7 +389,7 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
     {
         QSqlQuery queryUpdate;
         queryUpdate.prepare("update 商品 set "
-                            "商品分类ID=:categoryIDERP, 商品名称=:productName, 商品型号=:productMode, 商品简述=:productDesc, "
+                            "商品分类ID=:categoryIDERP, 商品名称=:productName, 品名简称=:briefName, 商品型号=:productMode, 商品简述=:productDesc, "
                             "商品物流重量=:weight, 商品详细描述=:productDescLong, p32=:productPhotoDesc, p33=:performance, p34=:warranty, "
                             "p35=:attention, p7=:vendorID, p37=:vendorName, 商品品牌ID=:brandIDERP, 贸易类型=:productTradeType, "
                             "p5=:onlineQty, p6=:platformQty, 销售价=:price, 商品英文名称=:productName_EN, 商品规格=:specifications, "
@@ -385,8 +399,8 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
                             "p22=:productId3, p8=:storeSysNo, p10=:categoryID, p40=:categoryName, p11=:brandID, p41=:brandName "
                             "where p31=:productId");
         queryUpdate.bindValue(":categoryIDERP", categoryIDERP);
-        queryUpdate.bindValue(":productName", productName);
-//        queryUpdate.bindValue(":briefName", briefName);
+        queryUpdate.bindValue(":productName", briefName);       // 将“商品名称”与“品名简称”进行对调赋值
+        queryUpdate.bindValue(":briefName", productName);
         queryUpdate.bindValue(":productMode", productMode);
         queryUpdate.bindValue(":productDesc", productDesc);
 
@@ -445,7 +459,7 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
     {
         QSqlQuery queryInsert;
         queryInsert.prepare("insert into 商品( "
-                            "p31, 商品分类ID, 商品名称, 商品编码, 商品型号, 商品简述, "
+                            "p31, 商品分类ID, 商品名称, 商品编码, 品名简称, 商品型号, 商品简述, "
                             "商品物流重量, 商品详细描述, p32, p33, p34, "
                             "p35, p7, p37, 商品品牌ID, 贸易类型, "
                             "p5, p6, 销售价, 商品英文名称, 商品规格, "
@@ -465,9 +479,9 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
                             ")");
         queryInsert.bindValue(":productId", productId);
         queryInsert.bindValue(":categoryIDERP", categoryIDERP);
-        queryInsert.bindValue(":productName", productName);
+        queryInsert.bindValue(":productName", briefName);     // 将“商品名称”与“品名简称”进行对调赋值
         queryInsert.bindValue(":productId2", productId);
-//        queryInsert.bindValue(":briefName", briefName);       // 因数据表的长度设计问题，暂时不要
+        queryInsert.bindValue(":briefName", productName);
         queryInsert.bindValue(":productMode", productMode);
         queryInsert.bindValue(":productDesc", productDesc);
 
