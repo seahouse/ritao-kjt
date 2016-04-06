@@ -119,6 +119,8 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Mod\SqlConn.cs" />
+    <Compile Include="Mod\SqlOpt.cs" />
     <Compile Include="OrderSOOutputWarehouse.aspx.cs">
       <DependentUpon>OrderSOOutputWarehouse.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>

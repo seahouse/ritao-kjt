@@ -8,6 +8,7 @@ using System.Text;
 using Newtonsoft.Json.Linq;
 using System.Data;
 using System.Data.SqlClient;
+using ritao_kjt_web.Mod;
 
 namespace ritao_kjt_web
 {
@@ -48,21 +49,12 @@ namespace ritao_kjt_web
                         JObject obj = JObject.Parse(dataValue);
                         string commitTime = (string)obj["CommitTime"];
                         string merchantOrderID = (string)obj["MerchantOrderID"];
-                        int shipTypeID = (int)obj["ShipTypeID"];
+                        string shipTypeID = (string)obj["ShipTypeID"];
                         string trackingNumber = (string)obj["TrackingNumber"];
 
                         // 写入数据库
-                        SqlConnection con = new SqlConnection();
-                        con.ConnectionString = "server=localhost;database=dayamoy;user=sa;pwd=liangyi0328";
-                        con.Open();
-
-                        SqlCommand com = new SqlCommand();
-                        com.Connection = con;
-                        com.CommandType = CommandType.Text;
-                        com.CommandText = "update 订单 set 发货状态=1 where 订单号='" + merchantOrderID + "'";
-                        SqlDataReader dr = com.ExecuteReader();
-                        dr.Close();
-                        con.Close();
+                        string strSql = "update 订单 set 发货状态=1, 物流公司='" + shipTypeID + "', 运单号='" + trackingNumber + "', 发票内容='" + commitTime + "' where 订单号='" + merchantOrderID + "'";
+                        SqlOpt.execSql(strSql);
                     }
                 }
             }
