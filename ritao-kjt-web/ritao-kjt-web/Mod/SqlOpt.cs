@@ -10,7 +10,7 @@ namespace ritao_kjt_web.Mod
 {
     public class SqlOpt
     {
-        public static void execSql(string strSql)
+        public static int execSql(string strSql)
         {
             SqlConnection con = new SqlConnection();
             con.ConnectionString = SqlConn.getConn();
@@ -20,9 +20,10 @@ namespace ritao_kjt_web.Mod
             com.Connection = con;
             com.CommandType = CommandType.Text;
             com.CommandText = strSql;
-            SqlDataReader dr = com.ExecuteReader();
-            dr.Close();
+            int rowsAffected = (int)com.ExecuteScalar();
             con.Close();
+
+            return rowsAffected;
         }
     }
 }
