@@ -14,13 +14,13 @@ namespace ritao_kjt_web.Mod
         {
             SqlConnection con = new SqlConnection();
             con.ConnectionString = SqlConn.getConn();
-            con.Open();
 
             SqlCommand com = new SqlCommand();
             com.Connection = con;
             com.CommandType = CommandType.Text;
             com.CommandText = strSql;
-            int rowsAffected = (int)com.ExecuteScalar();
+            con.Open();
+            int rowsAffected = com.ExecuteNonQuery();
             con.Close();
 
             return rowsAffected;

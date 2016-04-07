@@ -29,8 +29,7 @@ namespace ritao_kjt_web
             s.Dispose();
 
             string str = builder.ToString();
-            string filename = "1.txt";
-            System.IO.File.WriteAllText(filename, str, Encoding.UTF8);
+            //string str = Request.Form["data"];
 
             int index = str.IndexOf("&");
             string[] arr = { };
@@ -56,6 +55,7 @@ namespace ritao_kjt_web
 
                         // 写入数据库
                         string strSql = "update 订单 set 发货状态=1, 物流公司='" + shipTypeID + "', 运单号='" + trackingNumber + "', 发票内容='" + commitTime + "' where 订单号='" + merchantOrderID + "'";
+
                         if (SqlOpt.execSql(strSql) > 0)
                         {
                             Response.Write("SUCCESS");
