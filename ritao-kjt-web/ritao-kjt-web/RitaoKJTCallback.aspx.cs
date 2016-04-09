@@ -29,6 +29,7 @@ namespace ritao_kjt_web
             s.Dispose();
 
             string str = builder.ToString();
+
             //string str = Request.Form["data"];
             string method = Request.Form["method"];
             string data = HttpUtility.UrlDecode(Request.Form["data"]);
@@ -36,7 +37,7 @@ namespace ritao_kjt_web
             if (String.Compare(method, "Order.SOOutputWarehouse") == 0)
                 status = OrderSOOutputWarehouse(data);
             else if (String.Compare(method, "Inventory.ChannelQ4SAdjustRequest") == 0)
-                InventoryChannelQ4SAdjustRequest(data);
+                status = InventoryChannelQ4SAdjustRequest(data);
 
             if (status > 0)
             {
@@ -194,7 +195,7 @@ namespace ritao_kjt_web
                             strSql = "insert into 出入库单明细(出入库单ID, 商品ID, 库存商品ID, 库存商品编号, 商品名称, 商品规格, 商品颜色, 计量单位, 商品单价, 商品数量, " +
                                 "供应商ID, large_qty, orgi_price, sale_price" +
                                 ") values (" +
-                                "'" + id1 + "', " + wareHouseKIDERP.ToString() + ", " + wareHouseKIDERP.ToString() + ", '" + dtProduct.Rows[0]["商品编码"] + "', '" + dtProduct.Rows[0]["商品名称"] + "', '" + dtProduct.Rows[0]["商品规格"] + "', '" + dtProduct.Rows[0]["p24"] + "', '" + dtProduct.Rows[0]["计税单位"] + "', " + dtProduct.Rows[0]["销售价"] + ", " + qty.ToString() + ", " +
+                                "'" + id1 + "', " + productKIDERP.ToString() + ", " + productKIDERP.ToString() + ", '" + dtProduct.Rows[0]["商品编码"] + "', '" + dtProduct.Rows[0]["商品名称"] + "', '" + dtProduct.Rows[0]["商品规格"] + "', '" + dtProduct.Rows[0]["p24"] + "', '" + dtProduct.Rows[0]["计税单位"] + "', " + dtProduct.Rows[0]["销售价"] + ", " + qty.ToString() + ", " +
                                 "0, " + qty.ToString() + "," + dtProduct.Rows[0]["销售价"] + ", " + dtProduct.Rows[0]["销售价"] +
                                 ") select @@IDENTITY AS 'IDENTITY'";
                             if (SqlOpt.execInsertSQL(strSql) < 1)
