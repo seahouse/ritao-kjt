@@ -338,7 +338,7 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
                 brandIDERP = querybrandIDERP.value("商品品牌KID").toInt();
     }
     QString brandName = json.value("BrandName").toString();             // 品牌名称
-    int productTradeType = json.value("ProductTradeType").toInt();      // 贸易类型：0 = 直邮, 1 = 自贸
+    int productTradeType = json.value("ProductTradeType").toString("0").toInt();      // 贸易类型：0 = 直邮, 1 = 自贸
     int onlineQty = json.value("OnlineQty").toInt();                    // 渠道独占库存
     int platformQty = json.value("PlatformQty").toInt();                // 平台可售库存
     /// 价格：跨境通实际返回的是string，文档中却是double，需要先toString，再toDouble
@@ -468,7 +468,7 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
                             "手机端详细描述, 商品状态, 决策审核, 自定义ID1, 创建日期, "
                             "p22, p8, p10, p40, p11, p41 "
                             ") values ("
-                            ":productId, :categoryIDERP, :productName, :productId2, :productMode, :productDesc, "
+                            ":productId, :categoryIDERP, :productName, :productId2, :briefName, :productMode, :productDesc, "
                             ":weight, :productDescLong, :productPhotoDesc, :performance, :warranty, "
                             ":attention, :vendorID, :vendorName, :brandIDERP, :productTradeType, "
                             ":onlineQty, :platformQty, :price, :productName_EN, :specifications, "

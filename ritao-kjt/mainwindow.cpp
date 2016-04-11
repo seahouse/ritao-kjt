@@ -72,11 +72,11 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->pushButton_6->hide();
     ui->pushButton_4->hide();
     ui->pushButton_7->hide();
-    ui->pushButton_5->hide();
     ui->btnDownloadProduct->hide();
     ui->btnDownloadProductPrice->hide();
 #ifndef QT_NO_DEBUG
 #else
+    ui->pushButton_5->hide();
     ui->pushButton_8->hide();
 #endif
 }
