@@ -33,6 +33,7 @@ OrderUpload::OrderUpload(QObject *parent) : QObject(parent),
 void OrderUpload::upload()
 {
     _orderIdQueue.clear();
+    _msgList.clear();
 
     /// 获取需要新增到跨境通的商品KID列表
     QSqlQuery query(tr("select 同步主键KID from 数据同步 "
@@ -56,7 +57,7 @@ void OrderUpload::sTimeout()
         uploadNextOrder();
         break;
     case OTOrderUploadEnd:
-        emit finished(_success, tr("上传订单结束。"));
+        emit finished(_success, _msgList.join(', ') + ".");
         break;
     case OTOrderUploadError:
         emit finished(_success, _msg);
@@ -71,6 +72,7 @@ void OrderUpload::uploadNextOrder()
     if (_orderIdQueue.isEmpty())
     {
         _optType = OTOrderUploadEnd;
+        _msgList.append("上传订单结束。");
         _timer->start(1000);
         return;
     }
@@ -291,10 +293,13 @@ void OrderUpload::sReplyFinished(QNetworkReply *reply)
             if (!query.exec())
                 qInfo() << tr("更新订单的第三方订单号: ") << query.lastError().text();
             /// 将跨境通的“Kjt计算的运费金额”存入订单表
+            /// 将跨境通的“商品跨贸税总金额”存入订单表
             double shippingAmount = data.value("ShippingAmount").toDouble();
-            query.prepare(tr("update 订单 set 订单保价=:ShippingAmount "
+            double taxAmount = data.value("TaxAmount").toDouble();
+            query.prepare(tr("update 订单 set 订单保价=:shippingAmount, 税金=:taxAmount "
                              "where 订单KID=:id "));
-            query.bindValue(":ShippingAmount", shippingAmount);
+            query.bindValue(":shippingAmount", shippingAmount);
+            query.bindValue(":taxAmount", taxAmount);
             query.bindValue(":id", _ohData._currentOrderId);
             if (!query.exec())
                 qInfo() << tr("更新订单的Kjt计算的运费金额到订单保价: ") << query.lastError().text();
@@ -312,7 +317,8 @@ void OrderUpload::sReplyFinished(QNetworkReply *reply)
         {
             _success = false;
             _optType = OTOrderUploadError;
-            _msg = tr("上传订单错误：") + desc;
+//            _msg = tr("上传订单错误：") + desc;
+            _msgList.append("上传订单错误: (" + _ohData._currentOrderNumber + ")" + desc);
             _timer->start(1000);
         }
         break;

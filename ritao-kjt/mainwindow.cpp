@@ -870,37 +870,91 @@ void MainWindow::sOrderDownloadFinished(bool success, const QString &msg)
 
 void MainWindow::on_pushButton_8_clicked()
 {
-    QString url = "http://61.160.68.62:2015/ReceivablesAdd.aspx";
-//    QString url = "http://localhost:1517/ReceivablesAdd.aspx";
+//    QString url = "http://61.160.68.62:2015/ReceivablesAdd.aspx";
+    QString url = "http://localhost:1517/ReceivablesAdd.aspx";
+//    QString url = "http://localhost:1517/PayablesAdd.aspx";
+//    QString url = "http://localhost:8000/sales/salesorders/receiptpayments/storebync";
+//    QString url = "http://hyerp.ricki.cn/sales/salesorders/receiptpayments/storebync";
+//    QString url = "http://localhost:8000/purchase/purchaseorders/payments/storebync";
+//    QString url = "http://hyerp.ricki.cn/purchase/purchaseorders/payments/storebync";
 
-    QMap<QString, QString> paramsMap(g_paramsMap);
+//    QMap<QString, QString> paramsMap;
 
-    QJsonObject json;
-    json["CustomerName"] = "无锡益多环保热电有限公司";
-    json["ProjectName"] = "无锡益多500t/d垃圾焚烧炉尾气处理系统";
-    json["HappenDate"] = "2016-03-21 15:53";
-    json["Amount"] = 20.0;
-    json["Attn"] = "吴才本";
-    json["Remark"] = "";
-    json["CreateDate"] = "2016-03-22 15:53";
+//    QJsonObject json;
+//    json["CustomerName"] = "无锡益多环保热电有限公司";
+//    json["ProjectName"] = "无锡益多500t/d垃圾焚烧炉尾气处理系统";
+//    json["HappenDate"] = "2016-03-27 15:53";
+//    json["Amount"] = "20.0";
+//    json["Attn"] = "吴福本";
+//    json["Remark"] = "";
+//    json["CreateDate"] = "2016-03-28 15:53";
 
-    QJsonDocument jsonDoc(json);
-    paramsMap["data"] = jsonDoc.toJson(QJsonDocument::Compact);
+////    paramsMap["SupplierName"] = "江苏飞翔泵业制造有限公司";
+////    paramsMap["ProjectName"] = "环保厂2007.75#|魏桥纺织股份有限公司|滨州热电脱硫|2600.0000";
+////    paramsMap["HappenDate"] = "2016-03-27 15:53";
+////    paramsMap["Amount"] = "20.0";
+////    paramsMap["Attn"] = "吴福本";
+////    paramsMap["Remark"] = "";
+////    paramsMap["CreateDate"] = "2016-03-28 15:53";
+
+//    QJsonDocument jsonDoc(json);
+//    paramsMap["data"] = jsonDoc.toJson(QJsonDocument::Compact);
+
+//    QString params;
+//    QMapIterator<QString, QString> i(paramsMap);
+//    while (i.hasNext())
+//    {
+//        i.next();
+//        params.append(i.key()).append("=").append(i.value().toUtf8().toPercentEncoding()).append("&");
+//    }
+
+//    urlencodePercentConvert(params);
+//    qDebug() << params;
+////    QString sign = QCryptographicHash::hash(QString(params + g_config.kjtSecretkey()).toLatin1(), QCryptographicHash::Md5).toHex();
+////    params.append("sign=").append(sign);
+
+//    QNetworkRequest req;
+//    req.setUrl(QUrl(url));
+//    req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+////    _manager->post(req, params.toLatin1());
+//    _manager->post(req, jsonDoc.toJson(QJsonDocument::Compact));
+
+
+
+    QMap<QString, QString> paramsMap;
+
+    paramsMap["CustomerName"] = "无锡益多环保热电有限公司2";
+    paramsMap["ProjectName"] = "无锡益多500t/d垃圾焚烧炉尾气处理系统2";
+    paramsMap["HappenDate"] = "2016-03-27 15:53";
+    paramsMap["Amount"] = "2.0";
+    paramsMap["Attn"] = "吴经理";
+    paramsMap["Remark"] = "";
+    paramsMap["CreateDate"] = "2016-03-28 15:53";
+
+//    paramsMap["SupplierName"] = "江苏飞翔泵业制造有限公司";
+//    paramsMap["ProjectName"] = "环保厂2007.75#|魏桥纺织股份有限公司|滨州热电脱硫|2600.0000";
+//    paramsMap["HappenDate"] = "2016-03-27 15:53";
+//    paramsMap["Amount"] = "20.0";
+//    paramsMap["Attn"] = "吴福本";
+//    paramsMap["Remark"] = "";
+//    paramsMap["CreateDate"] = "2016-03-28 15:53";
+
 
     QString params;
     QMapIterator<QString, QString> i(paramsMap);
     while (i.hasNext())
     {
         i.next();
-        params.append(i.key()).append("=").append(i.value().toLatin1().toPercentEncoding()).append("&");
+        params.append(i.key()).append("=").append(i.value().toUtf8().toPercentEncoding()).append("&");
+//        params.append(i.key()).append("=").append(i.value()).append("&");
     }
 
+//    params = params.toUtf8().toPercentEncoding();
+    urlencodePercentConvert(params);
     qDebug() << params;
-    QString sign = QCryptographicHash::hash(QString(params + g_config.kjtSecretkey()).toLatin1(), QCryptographicHash::Md5).toHex();
-    params.append("sign=").append(sign);
 
     QNetworkRequest req;
     req.setUrl(QUrl(url));
     req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-    _manager->post(req, jsonDoc.toJson(QJsonDocument::Compact));
+    _manager->post(req, params.toLatin1());
 }

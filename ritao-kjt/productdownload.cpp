@@ -287,7 +287,7 @@ void ProductDownload::setProductGetFromKJTTime()
 void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
 {
     QString productId = json.value("ProductID").toString();             // ProductID
-    if (productId == "B43JPB03z840001")
+    if (productId == "B43JPB01g670001")
         int iii = 0;
     int categoryID = json.value("CategoryID").toInt();                  // 商品类别ID
     /// 获取ERP中的类别ID

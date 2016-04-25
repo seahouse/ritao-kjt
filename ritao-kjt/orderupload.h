@@ -50,6 +50,7 @@ private:
 private:
     QQueue<int> _orderIdQueue;
     QString _msg;
+    QStringList _msgList;
     QTimer *_timer;
     OptType _optType;
 
