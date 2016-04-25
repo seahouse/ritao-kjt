@@ -389,17 +389,18 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
     {
         QSqlQuery queryUpdate;
         queryUpdate.prepare("update 商品 set "
-                            "商品分类ID=:categoryIDERP, 商品名称=:productName, 品名简称=:briefName, 商品型号=:productMode, 商品简述=:productDesc, "
+                            "商品分类ID=:categoryIDERP, 品名简称=:briefName, 商品型号=:productMode, 商品简述=:productDesc, "
                             "商品物流重量=:weight, 商品详细描述=:productDescLong, p32=:productPhotoDesc, p33=:performance, p34=:warranty, "
                             "p35=:attention, p7=:vendorID, p37=:vendorName, 商品品牌ID=:brandIDERP, 贸易类型=:productTradeType, "
-                            "p5=:onlineQty, p6=:platformQty, 销售价=:price, 商品英文名称=:productName_EN, 商品规格=:specifications, "
+                            "p5=:onlineQty, p6=:platformQty, 商品英文名称=:productName_EN, 商品规格=:specifications, "
                             "产地=:origin, 计税单位=:taxUnit, 申报单位=:applyUnit, 商品毛重=:grossWeight, 商品净重=:suttleWeight, "
                             "商品备注=:note, 商品关税=:tariffRate, p39=:originCountryName, 是否属于保税仓=:isBaoshuicang, p23=:p23, p28=:p28, "
                             "手机端详细描述=:productDescLong2, 商品状态=:productStatus, 决策审核=:decisionreview, 自定义ID1=:customid1, 创建日期=:createDate, "
-                            "p22=:productId3, p8=:storeSysNo, p10=:categoryID, p40=:categoryName, p11=:brandID, p41=:brandName "
+                            "p22=:productId3, p8=:storeSysNo, p10=:categoryID, p40=:categoryName, p11=:brandID, p41=:brandName, 进项税=:jinxiangshui "
                             "where p31=:productId");
         queryUpdate.bindValue(":categoryIDERP", categoryIDERP);
-        queryUpdate.bindValue(":productName", briefName);       // 将“商品名称”与“品名简称”进行对调赋值
+        /// 商品名称=:productName  这个赋值被特殊处理，由于商品名称在第一次下载后由erp后台进行维护，不需要从跨境通进行更新
+//        queryUpdate.bindValue(":productName", briefName);       // 将“商品名称”与“品名简称”进行对调赋值
         queryUpdate.bindValue(":briefName", productName);
         queryUpdate.bindValue(":productMode", productMode);
         queryUpdate.bindValue(":productDesc", productDesc);
@@ -418,7 +419,8 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
 
         queryUpdate.bindValue(":onlineQty", onlineQty);
         queryUpdate.bindValue(":platformQty", platformQty);
-        queryUpdate.bindValue(":price", price);
+        /// 销售价=:price  此字段不更新
+//        queryUpdate.bindValue(":price", price);
         queryUpdate.bindValue(":productName_EN", productName_EN);
         queryUpdate.bindValue(":specifications", specifications);
 
@@ -429,7 +431,7 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
         queryUpdate.bindValue(":suttleWeight", suttleWeight);
 
         queryUpdate.bindValue(":note", note);
-        queryUpdate.bindValue(":tariffRate", tariffRate);
+        queryUpdate.bindValue(":tariffRate", 0);
         queryUpdate.bindValue(":originCountryName", originCountryName);
         queryUpdate.bindValue(":isBaoshuicang", 1);
         queryUpdate.bindValue(":p23", specifications);
@@ -447,6 +449,7 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
         queryUpdate.bindValue(":categoryName", categoryName);
         queryUpdate.bindValue(":brandID", brandID);
         queryUpdate.bindValue(":brandName", brandName);
+        queryUpdate.bindValue(":jinxiangshui", tariffRate);
 
         queryUpdate.bindValue(":productId", productId);
         if (!queryUpdate.exec())
@@ -466,7 +469,7 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
                             "产地, 计税单位, 申报单位, 商品毛重, 商品净重, "
                             "商品备注, 商品关税, p39, 是否属于保税仓, p23, p28,"
                             "手机端详细描述, 商品状态, 决策审核, 自定义ID1, 创建日期, "
-                            "p22, p8, p10, p40, p11, p41 "
+                            "p22, p8, p10, p40, p11, p41, 进项税 "
                             ") values ("
                             ":productId, :categoryIDERP, :productName, :productId2, :briefName, :productMode, :productDesc, "
                             ":weight, :productDescLong, :productPhotoDesc, :performance, :warranty, "
@@ -475,7 +478,7 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
                             ":origin, :taxUnit, :applyUnit, :grossWeight, :suttleWeight, "
                             ":note, :tariffRate, :originCountryName, :isBaoshuicang, :p23, :p28,"
                             ":productDescLong2, :productStatus, :decisionreview, :customid1, :createDate, "
-                            ":productId3, :storeSysNo, :categoryID, :categoryName, :brandID, :brandName "
+                            ":productId3, :storeSysNo, :categoryID, :categoryName, :brandID, :brandName, :jinxiangshui "
                             ")");
         queryInsert.bindValue(":productId", productId);
         queryInsert.bindValue(":categoryIDERP", categoryIDERP);
@@ -510,7 +513,7 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
         queryInsert.bindValue(":suttleWeight", suttleWeight);
 
         queryInsert.bindValue(":note", note);
-        queryInsert.bindValue(":tariffRate", tariffRate);
+        queryInsert.bindValue(":tariffRate", 0.0);
         queryInsert.bindValue(":originCountryName", originCountryName);
         queryInsert.bindValue(":isBaoshuicang", 1);
         queryInsert.bindValue(":p23", specifications);
@@ -528,6 +531,7 @@ void ProductDownload::insertProduct2ERPByJson(const QJsonObject &json)
         queryInsert.bindValue(":categoryName", categoryName);
         queryInsert.bindValue(":brandID", brandID);
         queryInsert.bindValue(":brandName", brandName);
+        queryInsert.bindValue(":jinxiangshui", tariffRate);
         if (!queryInsert.exec())
         {
             qInfo() << "下载商品" + productId + "错误：" << queryInsert.lastError().text();

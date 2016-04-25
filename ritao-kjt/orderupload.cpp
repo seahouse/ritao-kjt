@@ -72,7 +72,7 @@ void OrderUpload::uploadNextOrder()
     if (_orderIdQueue.isEmpty())
     {
         _optType = OTOrderUploadEnd;
-        _msgList.append("上传订单结束。");
+        _msgList.append("上传订单结束");
         _timer->start(1000);
         return;
     }
@@ -316,7 +316,8 @@ void OrderUpload::sReplyFinished(QNetworkReply *reply)
         else
         {
             _success = false;
-            _optType = OTOrderUploadError;
+            /// 不记录此错误，继续下一个订单
+//            _optType = OTOrderUploadError;
 //            _msg = tr("上传订单错误：") + desc;
             _msgList.append("上传订单错误: (" + _ohData._currentOrderNumber + ")" + desc);
             _timer->start(1000);
