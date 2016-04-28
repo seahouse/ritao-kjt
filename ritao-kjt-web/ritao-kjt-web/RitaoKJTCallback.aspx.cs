@@ -34,8 +34,11 @@ namespace ritao_kjt_web
             string method = Request.Form["method"];
             string data = HttpUtility.UrlDecode(Request.Form["data"]);
             int status = 0;
-            if (String.Compare(method, "Order.SOOutputWarehouse") == 0)
-                status = OrderSOOutputWarehouse(data);
+            // 修改为Order.SOOutputCustoms
+            //if (String.Compare(method, "Order.SOOutputWarehouse") == 0)
+            //    status = OrderSOOutputWarehouse(data);
+            if (String.Compare(method, "Order.SOOutputCustoms") == 0)
+                status = OrderSOOutputCustoms(data);
             else if (String.Compare(method, "Inventory.ChannelQ4SAdjustRequest") == 0)
                 status = InventoryChannelQ4SAdjustRequest(data);
 
@@ -108,6 +111,28 @@ namespace ritao_kjt_web
             // 操作数据库
             string strSql = "update 订单 set 发货状态=1, 物流公司='" + shipTypeID + "', 运单号='" + trackingNumber + "', 发票内容='" + commitTime + "' where 订单号='" + merchantOrderID + "'";
             return SqlOpt.execSql(strSql);
+        }
+
+        // KJT 通知分销渠道订单已出关区
+        private int OrderSOOutputCustoms(string data)
+        {
+            // 解析json
+            JObject obj = JObject.Parse(data);
+            string commitTime = (string)obj["CommitTime"];
+            string merchantOrderID = (string)obj["MerchantOrderID"];
+            string shipTypeID = (string)obj["ShipTypeID"];
+            string trackingNumber = (string)obj["TrackingNumber"];
+            string status = (string)obj["Status"];
+            string message = (string)obj["Message"];
+
+            // 操作数据库
+            if (status == "1")
+            {
+                string strSql = "update 订单 set 发货状态=1, 物流公司='" + shipTypeID + "', 运单号='" + trackingNumber + "', 发票内容='" + commitTime + "' where 订单号='" + merchantOrderID + "'";
+                return SqlOpt.execSql(strSql);
+            }
+
+            return -1;
         }
 
         // KJT 通知分销渠道库存调整

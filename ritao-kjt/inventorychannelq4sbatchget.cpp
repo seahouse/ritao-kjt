@@ -333,20 +333,21 @@ void InventoryChannelQ4SBatchGet::insertItem2ERPByJson(const QJsonObject &json)
         /// 若存在，则更新；若不存在，则新增
         if (queryInventory.first())
         {
-            QSqlQuery queryUpdate;
-            queryUpdate.prepare("update 仓库库存 set "
-                                "库存数量=:onlineQty, 仓库ID=:wareHouseIDLocal "
-                                "where 商品ID=:productIdLocal");
-            queryUpdate.bindValue(":onlineQty", onlineQty);
-            queryUpdate.bindValue(":wareHouseIDLocal", wareHouseIDLocal);
+            /// 修改：不进行更新。 20160426
+//            QSqlQuery queryUpdate;
+//            queryUpdate.prepare("update 仓库库存 set "
+//                                "库存数量=:onlineQty, 仓库ID=:wareHouseIDLocal "
+//                                "where 商品ID=:productIdLocal");
+//            queryUpdate.bindValue(":onlineQty", onlineQty);
+//            queryUpdate.bindValue(":wareHouseIDLocal", wareHouseIDLocal);
 
-            queryUpdate.bindValue(":productIdLocal", productIdLocal);
+//            queryUpdate.bindValue(":productIdLocal", productIdLocal);
 
-            if (!queryUpdate.exec())
-            {
-                qInfo() << queryUpdate.lastError().text();
-                _hData._success = false;
-            }
+//            if (!queryUpdate.exec())
+//            {
+//                qInfo() << queryUpdate.lastError().text();
+//                _hData._success = false;
+//            }
         }
         else
         {
