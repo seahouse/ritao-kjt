@@ -131,8 +131,16 @@ namespace ritao_kjt_web
                 string strSql = "update 订单 set 发货状态=1, 物流公司='" + shipTypeID + "', 运单号='" + trackingNumber + "', 发票内容='" + commitTime + "' where 订单号='" + merchantOrderID + "'";
                 return SqlOpt.execSql(strSql);
             }
+            // 记录到系统日志
+            else
+            {
+                string strSql = "insert into 系统日志(用户名称, 日志类别, 日志日期, 日志内容, 日志备注, 创建日期) " +
+                    "values ('跨境通回调', '错误', '" + commitTime + "', '" + message + "', 'KJT 通知分销渠道订单已出关区', '" + DateTime.Now.ToString() + "')";
+                SqlOpt.execSql(strSql);
+                return -1;
+            }
 
-            return -1;
+            //return -1;
         }
 
         // KJT 通知分销渠道库存调整
