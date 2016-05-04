@@ -916,9 +916,11 @@ void MainWindow::on_pushButton_8_clicked()
 
         QMap<QString, QString> paramsMap;
 
-        paramsMap["appkey"] = "Gappkey_standard_cq_rt";
+//        paramsMap["appkey"] = "Gappkey_standard_cq_rt";
+        paramsMap["appkey"] = "Gappkey_standard_cq_rks";
         paramsMap["service"] = "subItemAddOrUpdate";
         paramsMap["format"] = "JSON";
+        paramsMap["encrypt"] = "0";
 
         QJsonObject json;
 
@@ -941,12 +943,12 @@ void MainWindow::on_pushButton_8_clicked()
         QJsonArray skuList;
         // 1
         QJsonObject sku1;
-        sku1["skuId"] = "10762US212";
+        sku1["skuId"] = "seahouse01";
         sku1["skuHgId"] = "20115207022601";
         sku1["isbs"] = "true";
         sku1["hgzc"] = "test";
         sku1["hgxh"] = "test";
-        sku1["ownerCode"] = "zgm";
+        sku1["ownerCode"] = "rks";
         sku1["ownerName"] = "zgm";
         sku1["skuSpecId"] = "318g桶";
         sku1["outerId"] = "";
@@ -980,6 +982,7 @@ void MainWindow::on_pushButton_8_clicked()
         {
             i.next();
             params.append(i.key()).append("=").append(i.value().toUtf8().toPercentEncoding()).append("&");
+//            params.append(i.key()).append("=").append(i.value()).append("&");
         }
 
         QString secret = QCryptographicHash::hash(QString(params + g_config.kjtSecretkey()).toLatin1(), QCryptographicHash::Md5).toHex();
