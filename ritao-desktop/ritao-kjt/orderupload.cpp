@@ -224,18 +224,20 @@ void OrderUpload::outputSOWarehouse()
 //    QString url = "http://kjt.ritaoshimao.com/RitaoKJTCallback.aspx";
 
     QMap<QString, QString> paramsMap(g_paramsMap);
-//    paramsMap["method"] = "Order.SOOutputCustoms";                // 由接口提供方指定的接口标识符
-    paramsMap["method"] = "Inventory.ChannelQ4SAdjustRequest";                // 由接口提供方指定的接口标识符
+    paramsMap["method"] = "Order.SOOutputCustoms";                // 由接口提供方指定的接口标识符
+//    paramsMap["method"] = "Inventory.ChannelQ4SAdjustRequest";                // 由接口提供方指定的接口标识符
     paramsMap["timestamp"] = QDateTime::currentDateTime().toString("yyyyMMddhhmmss");       // 调用方时间戳，格式为“4 位年+2 位月+2 位日+2 位小时(24 小时制)+2 位分+2 位秒”
     paramsMap["nonce"] = QString::number(100000 + qrand() % (999999 - 100000)); // QString::number(100000 + qrand() % (999999 - 100000));
 
     QJsonObject json;
-    json["MerchantOrderID"] = "018524818500";      // 商家订单编号
+    json["MerchantOrderID"] = "wfx201604050003";      // 商家订单编号
     /// 订单物流运输公司编号
     /// 1=顺丰 2=圆通 84=如风达
     json["ShipTypeID"] = 1;
     json["TrackingNumber"] = "123456";
     json["CommitTime"] = "20151117020101";
+    json["Status"] = "1";
+    json["Message"] = "aaaa";
 
     QJsonDocument jsonDoc(json);
     paramsMap["data"] = jsonDoc.toJson(QJsonDocument::Compact);
@@ -252,18 +254,19 @@ void OrderUpload::outputSOWarehouse()
     QString sign = QCryptographicHash::hash(QString(params + g_config.kjtSecretkey()).toLatin1(), QCryptographicHash::Md5).toHex();
     params.append("sign=").append(sign);
 
-    QFile file("1.txt");
-    QByteArray bb;
-    if (file.open(QIODevice::ReadOnly))
-    {
-        bb = file.readAll();
-        file.close();
-    }
+//    QFile file("1.txt");
+//    QByteArray bb;
+//    if (file.open(QIODevice::ReadOnly))
+//    {
+//        bb = file.readAll();
+//        file.close();
+//    }
 
     QNetworkRequest req;
     req.setUrl(QUrl(url));
     req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-    _manager->post(req, bb);
+//    _manager->post(req, bb);
+    _manager->post(req, params.toLatin1());
 }
 
 void OrderUpload::sReplyFinished(QNetworkReply *reply)

@@ -135,7 +135,25 @@ namespace ritao_kjt_web
             if (status == "1")
             {
                 string strSql = "update 订单 set 发货状态=1, 物流公司='" + shipTypeID + "', 运单号='" + trackingNumber + "', 发票内容='" + commitTime + "' where 订单号='" + merchantOrderID + "'";
-                return SqlOpt.execSql(strSql);
+                if (SqlOpt.execSql(strSql) > 0)
+                {
+                    // 更新“仓库库存”中的“待发数量”；
+                    int warehouseID = SqlOpt.getIntFieldBySQL("select 仓库ID from 订单 where 订单号='" + merchantOrderID + "'");
+                    int orderID = SqlOpt.getIntFieldBySQL("select 订单KID from 订单 where 订单号='" + merchantOrderID + "'");
+                    DataTable dtOrderProduct = SqlOpt.getDataTableBySQL("select * from 订单商品 where 订单ID=" + orderID.ToString());
+                    for (int i = 0; i < dtOrderProduct.Rows.Count; i++)
+                    {
+                        int productID =int.Parse(dtOrderProduct.Rows[i]["商品ID"].ToString());
+                        double qtyBuy = double.Parse(dtOrderProduct.Rows[i]["购买数量"].ToString());
+
+                        int warehouseStockID = SqlOpt.getIntFieldBySQL("select 仓库库存KID from 仓库库存 where 商品ID=" + productID.ToString() + " and 仓库ID=" + warehouseID.ToString());
+                        if (warehouseStockID > 0)
+                            SqlOpt.execSql("update 仓库库存 set 待发数量=待发数量-" + qtyBuy.ToString() + " where 仓库库存KID=" + warehouseStockID.ToString());
+                    }
+                    return 1;
+                }
+                else
+                    return -1;
             }
             // 记录到系统日志
             else
