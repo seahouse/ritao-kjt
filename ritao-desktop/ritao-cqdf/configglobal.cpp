@@ -29,11 +29,9 @@ void ConfigGlobal::read(const QJsonObject &json)
     _dbName = json.value("dbName").toString();
     _dbUsername = json.value("dbUsername").toString();
     _dbPassword = json.value("dbPassword").toString();
-    _kjtUrl = json.value("kjtUrl").toString();
-    _kjtSecretkey = json.value("kjtSecretkey").toString();
-    _kjtAppid = json.value("kjtAppid").toString();
-    _kjtSaleschannelsysno = json.value("kjtSaleschannelsysno").toString();
-    _kjtVersion = json.value("kjtVersion").toString();
-    _kjtFormat = json.value("kjtFormat").toString();
+    _cqdfUrl = json.value("cqdfUrl").toString();
+    _cqdfAppkey = json.value("cqdAppkey").toString();
+    _cqdfFormat = json.value("cqdFormat").toString();
+    _cqdfEncrypt = json.value("cqdEncrypt").toString();
     _intervalMinutes = json.value("intervalMinutes").toInt(30);
 }

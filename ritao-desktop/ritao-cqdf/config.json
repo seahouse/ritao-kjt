@@ -3,11 +3,9 @@
 	"dbName": "",
 	"dbUsername": "",
 	"dbPassword": "",
-	"kjtUrl": "",
-	"kjtSecretkey": "",
-	"kjtAppid": "",
-	"kjtSaleschannelsysno": "",
-	"kjtVersion": "",
-	"kjtFormat": "",
-	"intervalMinutes": 
+	"cqdfUrl": "",
+	"cqdAppkey": "",
+	"cqdFormat": "",
+	"cqdEncrypt": "",
+	"intervalMinutes": 30
 }

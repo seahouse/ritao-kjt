@@ -1,6 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include "configglobal.h"
+
 #include <QTimer>
 #include <QDebug>
 
@@ -12,6 +14,10 @@ MainWindow::MainWindow(QWidget *parent) :
     _synchronizeType(STNone)
 {
     ui->setupUi(this);
+
+    g_paramsMap["appkey"] = g_config.cqdfAppkey();
+    g_paramsMap["format"] = g_config.cqdfFormat();               // 接口返回结果类型:json
+    g_paramsMap["encrypt"] = g_config.cqdfEncrypt();               // 由接口提供方指定的接口版本
 
     _timer = new QTimer;
     connect(_timer, SIGNAL(timeout()), this, SLOT(sTimeout()));

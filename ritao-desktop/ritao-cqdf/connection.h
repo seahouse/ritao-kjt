@@ -22,9 +22,9 @@ static bool createConnection()
 //        db.setUserName("dayamoyadmin");
 //        db.setPassword("dayamoyadmin2015");
 #else
-        db.setDatabaseName("DRIVER={SQL SERVER};SERVER=120.55.165.90,9001;DATABASE=dayamoy;");
-        db.setUserName("dayamoyadmin");
-        db.setPassword("dayamoyadmin2015");
+        db.setDatabaseName("DRIVER={SQL SERVER};SERVER=" + g_config.dbHost() + ";DATABASE=" + g_config.dbName() + ";");
+        db.setUserName(g_config.dbUsername());
+        db.setPassword(g_config.dbPassword());
 #endif
 
     }

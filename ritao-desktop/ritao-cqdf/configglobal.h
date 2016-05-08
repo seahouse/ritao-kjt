@@ -15,12 +15,10 @@ public:
     QString dbName() const { return _dbName; }
     QString dbUsername() const { return _dbUsername; }
     QString dbPassword() const { return _dbPassword; }
-    QString kjtUrl() const { return _kjtUrl; }
-    QString kjtSecretkey() const { return _kjtSecretkey; }
-    QString kjtAppid() const { return _kjtAppid; }
-    QString kjtSaleschannelsysno() const { return _kjtSaleschannelsysno; }
-    QString kjtVersion() const { return _kjtVersion; }
-    QString kjtFormat() const { return _kjtFormat; }
+    QString cqdfUrl() const { return _cqdfUrl; }
+    QString cqdfAppkey() const { return _cqdfAppkey; }
+    QString cqdfFormat() const { return _cqdfFormat; }
+    QString cqdfEncrypt() const { return _cqdfEncrypt; }
     int intervalMinutes() const { return _intervalMinutes; }
 
 private:
@@ -31,12 +29,10 @@ private:
     QString _dbName;
     QString _dbUsername;
     QString _dbPassword;
-    QString _kjtUrl;
-    QString _kjtSecretkey;
-    QString _kjtAppid;
-    QString _kjtSaleschannelsysno;
-    QString _kjtVersion;
-    QString _kjtFormat;
+    QString _cqdfUrl;
+    QString _cqdfAppkey;
+    QString _cqdfFormat;
+    QString _cqdfEncrypt;
     int _intervalMinutes;
 };
 

@@ -33,8 +33,9 @@ void ProductUpload::upload()
     _msgList.clear();
 
     /// 获取需要新增到跨境通的商品KID列表
+    /// test erp product id: 6608
     QSqlQuery query(tr("select 同步主键KID from 数据同步 "
-                       "where p1=1 and p2=0 and 同步指令='新增' and 同步表名='商品' "
+                       "where p1='1' and p2='0' and 同步指令='新增' and 同步表名='商品' "
                        "order by 数据同步KID "));
     while (query.next())
         _productIdQueue.enqueue(query.value(tr("同步主键KID")).toInt());
@@ -99,11 +100,28 @@ void ProductUpload::uploadNextProduct()
 //        }
 
         QMap<QString, QString> paramsMap(g_paramsMap);
-        paramsMap["method"] = "Product.ProductCreate";             // 由接口提供方指定的接口标识符
-        paramsMap["timestamp"] = QDateTime::currentDateTime().toString("yyyyMMddhhmmss");       // 调用方时间戳，格式为“4 位年+2 位月+2 位日+2 位小时(24 小时制)+2 位分+2 位秒”
-        paramsMap["nonce"] = QString::number(100000 + qrand() % (999999 - 100000)); // QString::number(100000 + qrand() % (999999 - 100000));
+        paramsMap["service"] = "subItemAddOrUpdate";             // 由接口提供方指定的接口标识符
+//        paramsMap["timestamp"] = QDateTime::currentDateTime().toString("yyyyMMddhhmmss");       // 调用方时间戳，格式为“4 位年+2 位月+2 位日+2 位小时(24 小时制)+2 位分+2 位秒”
+//        paramsMap["nonce"] = QString::number(100000 + qrand() % (999999 - 100000)); // QString::number(100000 + qrand() % (999999 - 100000));
 
         QJsonObject json;
+
+        QJsonArray itemList;
+
+        QJsonObject item;
+        item["goodsId"] = QString::number(query.value(tr("商品KID")).toInt());        // 商品货号
+        item["title"] = query.value(tr("商品名称")).toString();;                       // 商品名称
+        item["num"] = "0";
+        item["desc"] = "无";
+        item["price"] = "0";
+        item["postFee"] = "0";
+        item["expessFee"] = "0";
+        item["emsFee"] = "0";
+        item["outerId"] = "";
+        item["listTime"] = "0";
+        item["type"] = "fixed";
+        item["approveStatus"] = "test";
+
         json["IsSettledDown"] = query.value(tr("入住商品")).toInt();                // 是否为入驻商品。0 = 否 1 = 是
         json["MerchantProductID"] = QString::number(query.value(tr("商品KID")).toInt());         // 商户商品 ID
         json["ProductName"] = query.value(tr("商品名称")).toString();               // 商品名称
@@ -192,12 +210,12 @@ void ProductUpload::uploadNextProduct()
 
         urlencodePercentConvert(params);
         qDebug() << params;
-        QString sign = QCryptographicHash::hash(QString(params + g_config.kjtSecretkey()).toLatin1(), QCryptographicHash::Md5).toHex();
+        QString sign = QCryptographicHash::hash(params.toLatin1(), QCryptographicHash::Md5).toHex();
         params.append("sign=").append(sign);
         qDebug() << sign;
 
         QNetworkRequest req;
-        req.setUrl(QUrl(g_config.kjtUrl()));
+        req.setUrl(QUrl(g_config.cqdfUrl()));
         req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
         _manager->post(req, params.toLatin1());
     }
