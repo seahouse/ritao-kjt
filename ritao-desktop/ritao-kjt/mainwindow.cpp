@@ -870,130 +870,144 @@ void MainWindow::sOrderDownloadFinished(bool success, const QString &msg)
 
 void MainWindow::on_pushButton_8_clicked()
 {
-////    QString url = "http://61.160.68.62:2015/ReceivablesAdd.aspx";
-////    QString url = "http://localhost:1517/ReceivablesAdd.aspx";
+    QString url = "http://www.huaxing-east.cn:2015/ReceivablesAdd.aspx";
+//    QString url = "http://localhost:1517/ReceivablesAdd.aspx";
 //    QString url = "http://localhost:8000/sales/salesorders/3/receiptpayments/store3";
 
 //    QMap<QString, QString> paramsMap(g_paramsMap);
+    QMap<QString, QString> paramsMap;
 
 //    QJsonObject json;
-//    json["CustomerName"] = "无锡益多环保热电有限公司";
+//    json["CustomerNumber"] = "C0001";
+//    json["CustomerName"] = "无锡某某公司01";
+//    json["ProjectNumber"] = "P0001";
 //    json["ProjectName"] = "无锡益多500t/d垃圾焚烧炉尾气处理系统";
 //    json["HappenDate"] = "2016-03-21 15:53";
-//    json["Amount"] = 20.0;
+//    json["AmountNumber"] = "R0001";
+//    json["Amount"] = "20.0";
 //    json["Attn"] = "吴才本";
-//    json["Remark"] = "";
+//    json["Remark"] = "aaaa";
 //    json["CreateDate"] = "2016-03-22 15:53";
 //    json["_token"] = "tgUZkCZrrtsW9Kc8Z9UZotnmknqtF0Sc0DtdCiRj";
 
 //    QJsonDocument jsonDoc(json);
 //    paramsMap["data"] = jsonDoc.toJson(QJsonDocument::Compact);
 
-//    QString params;
-//    QMapIterator<QString, QString> i(paramsMap);
-//    while (i.hasNext())
-//    {
-//        i.next();
-//        params.append(i.key()).append("=").append(i.value().toUtf8().toPercentEncoding()).append("&");
-//    }
+    paramsMap["CustomerNumber"] = "C0001";
+    paramsMap["CustomerName"] = "无锡某某公司01";
+    paramsMap["ProjectNumber"] = "P0001";
+    paramsMap["ProjectName"] = "无锡益多500t/d垃圾焚烧炉尾气处理系统";
+    paramsMap["HappenDate"] = "2016-03-21 15:53";
+    paramsMap["AmountNumber"] = "R0001";
+    paramsMap["Amount"] = "20.0";
+    paramsMap["Attn"] = "徐令侃";
+    paramsMap["Remark"] = "aaaa";
+    paramsMap["CreateDate"] = "2016-03-22 15:53";
+    paramsMap["_token"] = "tgUZkCZrrtsW9Kc8Z9UZotnmknqtF0Sc0DtdCiRj";
 
-//    QString sign = QCryptographicHash::hash(QString(params + g_config.kjtSecretkey()).toLatin1(), QCryptographicHash::Md5).toHex();
-//    params.append("sign=").append(sign);
-//    urlencodePercentConvert(params);
-//    qDebug() << params;
+    QString params;
+    QMapIterator<QString, QString> i(paramsMap);
+    while (i.hasNext())
+    {
+        i.next();
+        params.append(i.key()).append("=").append(i.value().toUtf8().toPercentEncoding()).append("&");
+    }
 
-//    QNetworkRequest req;
-//    req.setUrl(QUrl(url));
-//    req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-////    _manager->post(req, jsonDoc.toJson(QJsonDocument::Compact));
-//    _manager->post(req, params.toLatin1());
+    QString sign = QCryptographicHash::hash(QString(params + g_config.kjtSecretkey()).toLatin1(), QCryptographicHash::Md5).toHex();
+    params.append("sign=").append(sign);
+    urlencodePercentConvert(params);
+    qDebug() << params;
 
-
-
-    //    QString url = "http://61.160.68.62:2015/ReceivablesAdd.aspx";
-    //    QString url = "http://localhost:1517/ReceivablesAdd.aspx";
-        QString url = "http://222.180.251.246:8086/ODS/ODSService";
-
-        QMap<QString, QString> paramsMap;
-
-//        paramsMap["appkey"] = "Gappkey_standard_cq_rt";
-        paramsMap["appkey"] = "Gappkey_standard_cq_rks";
-        paramsMap["service"] = "subItemAddOrUpdate";
-        paramsMap["format"] = "JSON";
-        paramsMap["encrypt"] = "0";
-
-        QJsonObject json;
-
-        QJsonArray itemList;
-        // 1
-        QJsonObject item1;
-        item1["goodsId"] = "1076US212";
-        item1["title"] = "康宝莱奶昔伴1421421侣";
-        item1["num"] = "0";
-        item1["desc"] = "无";
-        item1["price"] = "0";
-        item1["postFee"] = "0";
-        item1["expessFee"] = "0";
-        item1["emsFee"] = "0";
-        item1["outerId"] = "";
-        item1["listTime"] = "0";
-        item1["type"] = "fixed";
-        item1["approveStatus"] = "test";
-
-        QJsonArray skuList;
-        // 1
-        QJsonObject sku1;
-        sku1["skuId"] = "seahouse01";
-        sku1["skuHgId"] = "20115207022601";
-        sku1["isbs"] = "true";
-        sku1["hgzc"] = "test";
-        sku1["hgxh"] = "test";
-        sku1["ownerCode"] = "rks";
-        sku1["ownerName"] = "zgm";
-        sku1["skuSpecId"] = "318g桶";
-        sku1["outerId"] = "";
-        sku1["barcode"] = "1076US";
-        sku1["numlid"] = "0";
-        sku1["quantity"] = "0";
-        sku1["price"] = "0";
-        sku1["fjm"] = "test";
-        sku1["status"] = "normal";
-        sku1["type"] = "全量更新";
-
-        skuList.append(sku1);
-        item1["skuList"] = skuList;
-        itemList.append(item1);
-        json["itemList"] = itemList;
-
-        QJsonDocument jsonDoc(json);
-        paramsMap["content"] = jsonDoc.toJson(QJsonDocument::Compact);
-
-        QFile file("11.txt");
-        if (file.open(QIODevice::WriteOnly))
-        {
-            QTextStream out(&file);
-            out << jsonDoc.toJson(QJsonDocument::Compact);
-            file.close();
-        }
-
-        QString params;
-        QMapIterator<QString, QString> i(paramsMap);
-        while (i.hasNext())
-        {
-            i.next();
-            params.append(i.key()).append("=").append(i.value().toUtf8().toPercentEncoding()).append("&");
-//            params.append(i.key()).append("=").append(i.value()).append("&");
-        }
-
-        QString secret = QCryptographicHash::hash(QString(params + g_config.kjtSecretkey()).toLatin1(), QCryptographicHash::Md5).toHex();
-        params.append("secret=").append(secret);
-        urlencodePercentConvert(params);
-        qDebug() << params;
+    QNetworkRequest req;
+    req.setUrl(QUrl(url));
+    req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+//    _manager->post(req, jsonDoc.toJson(QJsonDocument::Compact));
+    _manager->post(req, params.toLatin1());
 
 
-        QNetworkRequest req;
-        req.setUrl(QUrl(url));
-        req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-    //    _manager->post(req, jsonDoc.toJson(QJsonDocument::Compact));
-        _manager->post(req, params.toLatin1());
+
+//    //    QString url = "http://61.160.68.62:2015/ReceivablesAdd.aspx";
+//    //    QString url = "http://localhost:1517/ReceivablesAdd.aspx";
+//        QString url = "http://222.180.251.246:8086/ODS/ODSService";
+
+//        QMap<QString, QString> paramsMap;
+
+////        paramsMap["appkey"] = "Gappkey_standard_cq_rt";
+//        paramsMap["appkey"] = "Gappkey_standard_cq_rks";
+//        paramsMap["service"] = "subItemAddOrUpdate";
+//        paramsMap["format"] = "JSON";
+//        paramsMap["encrypt"] = "0";
+
+//        QJsonObject json;
+
+//        QJsonArray itemList;
+//        // 1
+//        QJsonObject item1;
+//        item1["goodsId"] = "1076US212";
+//        item1["title"] = "康宝莱奶昔伴1421421侣";
+//        item1["num"] = "0";
+//        item1["desc"] = "无";
+//        item1["price"] = "0";
+//        item1["postFee"] = "0";
+//        item1["expessFee"] = "0";
+//        item1["emsFee"] = "0";
+//        item1["outerId"] = "";
+//        item1["listTime"] = "0";
+//        item1["type"] = "fixed";
+//        item1["approveStatus"] = "test";
+
+//        QJsonArray skuList;
+//        // 1
+//        QJsonObject sku1;
+//        sku1["skuId"] = "seahouse01";
+//        sku1["skuHgId"] = "20115207022601";
+//        sku1["isbs"] = "true";
+//        sku1["hgzc"] = "test";
+//        sku1["hgxh"] = "test";
+//        sku1["ownerCode"] = "rks";
+//        sku1["ownerName"] = "zgm";
+//        sku1["skuSpecId"] = "318g桶";
+//        sku1["outerId"] = "";
+//        sku1["barcode"] = "1076US";
+//        sku1["numlid"] = "0";
+//        sku1["quantity"] = "0";
+//        sku1["price"] = "0";
+//        sku1["fjm"] = "test";
+//        sku1["status"] = "normal";
+//        sku1["type"] = "全量更新";
+
+//        skuList.append(sku1);
+//        item1["skuList"] = skuList;
+//        itemList.append(item1);
+//        json["itemList"] = itemList;
+
+//        QJsonDocument jsonDoc(json);
+//        paramsMap["content"] = jsonDoc.toJson(QJsonDocument::Compact);
+
+//        QFile file("11.txt");
+//        if (file.open(QIODevice::WriteOnly))
+//        {
+//            QTextStream out(&file);
+//            out << jsonDoc.toJson(QJsonDocument::Compact);
+//            file.close();
+//        }
+
+//        QString params;
+//        QMapIterator<QString, QString> i(paramsMap);
+//        while (i.hasNext())
+//        {
+//            i.next();
+//            params.append(i.key()).append("=").append(i.value().toUtf8().toPercentEncoding()).append("&");
+//        }
+
+//        QString secret = QCryptographicHash::hash(QString(params + g_config.kjtSecretkey()).toLatin1(), QCryptographicHash::Md5).toHex();
+//        params.append("secret=").append(secret);
+//        urlencodePercentConvert(params);
+//        qDebug() << params;
+
+
+//        QNetworkRequest req;
+//        req.setUrl(QUrl(url));
+//        req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+//        _manager->post(req, params.toLatin1());
 }
