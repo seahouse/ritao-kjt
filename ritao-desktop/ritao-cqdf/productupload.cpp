@@ -107,97 +107,54 @@ void ProductUpload::uploadNextProduct()
         QJsonObject json;
 
         QJsonArray itemList;
-
         QJsonObject item;
-        item["goodsId"] = QString::number(query.value(tr("商品KID")).toInt());        // 商品货号
-        item["title"] = query.value(tr("商品名称")).toString();;                       // 商品名称
-        item["num"] = "0";
-        item["desc"] = "无";
-        item["price"] = "0";
-        item["postFee"] = "0";
-        item["expessFee"] = "0";
-        item["emsFee"] = "0";
-        item["outerId"] = "";
-        item["listTime"] = "0";
-        item["type"] = "fixed";
-        item["approveStatus"] = "test";
+        item["goodsId"] = query.value(tr("商品编码")).toString();               // 商品货号
+        item["title"] = query.value(tr("商品名称")).toString();                 // 商品名称
+        item["num"] = "0";                                                      // 数量
+        item["desc"] = query.value(tr("商品简述")).toString();                  // 商品描述
+        item["price"] = QString::number(query.value(tr("销售价")).toDouble()); // 商品价格
+        item["postFee"] = "0";                                                  // 平邮费用
+        item["expessFee"] = "0";                                                // 快递费用
+        item["emsFee"] = "0";                                                   // ems费用
+        item["outerId"] = "";                                                   // 外部编码
+        item["listTime"] = query.value(tr("创建日期")).toDate().toString();     // 上架时间
+        item["type"] = "fixed";                     // 发布类型  fixed(一口价),auction(拍卖)
+        item["approveStatus"] = "onsale";           // 商品上传后的状态  onsale(出售中),instock(仓库中)
 
-        json["IsSettledDown"] = query.value(tr("入住商品")).toInt();                // 是否为入驻商品。0 = 否 1 = 是
-        json["MerchantProductID"] = QString::number(query.value(tr("商品KID")).toInt());         // 商户商品 ID
-        json["ProductName"] = query.value(tr("商品名称")).toString();               // 商品名称
-        json["BriefName"] = "HW";   // query.value(tr("品名简称")).toString();                 // 商品简称  //
+        QJsonArray skuList;
+        QJsonObject sku;
+        sku["skuId"] = query.value(tr("商品编码")).toString();              // sku的id
+        sku["skuHgId"] = "20115207022601";
+        int productTradeType = query.value(tr("贸易类型")).toInt();             // 贸易类型  0 = 直邮 1 = 自贸
+        sku["isbs"] = productTradeType == 1 ? "true" : "false";             // 是否保税商品true或者false
+        sku["hgzc"] = "test";
+        sku["hgxh"] = "test";
+        sku["ownerCode"] = "rks";
+        sku["ownerName"] = "zgm";
+        sku["skuSpecId"] = query.value(tr("商品规格")).toString();              // 产品规格信息
+        sku["outerId"] = "";                        // 新增可以空,商家设置的外部id
+        sku["barcode"] = query.value(tr("商品条形码")).toString();               // 商品级别的条形码(SKUID)
+        sku["numlid"] = "0";
+        sku["quantity"] = "0";
+        sku["price"] = QString::number(query.value(tr("销售价")).toDouble());  // 商品SKU的价格
+        sku["fjm"] = "test";
+        sku["status"] = "normal";
+        sku["type"] = "全量更新";
 
-        /// 获取跨境通品牌编码
-        QString brandCode;      // 默认值
-        QSqlQuery queryBrandCode;
-        queryBrandCode.prepare(tr("select * from 商品品牌 where 商品品牌KID=:brandCode"));
-        queryBrandCode.bindValue(":brandCode", query.value(tr("商品品牌ID")).toInt());
-        if (queryBrandCode.exec())
-            if (queryBrandCode.first())
-                brandCode = queryBrandCode.value(tr("跨境通商品品牌编码")).toString().trimmed();
-        /// temp: 如果為空，填寫默認值。 將來修改為日誌記錄與短信提示
-        brandCode = brandCode.isEmpty() ? "950" : brandCode;
-        json["BrandCode"] = brandCode;                      // 品牌编号 code
-        /// 获取跨境通分类编码
-        QString c3Code;      // 默认值
-        QSqlQuery queryC3Code;
-        queryC3Code.prepare(tr("select * from 商品分类 where 商品分类KID=:c3Code"));
-        queryC3Code.bindValue(":c3Code", query.value(tr("商品分类ID")).toInt());
-        if (queryC3Code.exec())
-            if (queryC3Code.first())
-                c3Code = queryC3Code.value(tr("跨境通商品分类编码")).toString().trimmed();
-        /// temp: 如果為空，填寫默認值。 將來修改為日誌記錄與短信提示
-        c3Code = c3Code.isEmpty() ? "A46" : c3Code;
-        json["C3Code"] = c3Code; // query.value(tr("商品分类ID")).toString();        // 三级分类 code
-        json["ProductTradeType"] = query.value(tr("贸易类型")).toInt();             // 贸易类型  0 = 直邮 1 = 自贸
-        json["OriginCode"] = "JP"; // query.value(tr("产地")).toString();                   // 产地，两位字母。 默認為 JP
-        json["ProductDesc"] = query.value(tr("商品简述")).toString();               // 商品简述
-        json["ProductDescLong"] = query.value(tr("商品详细描述")).toString();             // 商品详述
-
-        QJsonObject productPriceInfoJsonObject;                     // 商品价格信息
-        productPriceInfoJsonObject["BasicPrice"] = query.value(tr("市场价")).toDouble();
-        productPriceInfoJsonObject["CurrentPrice"] = query.value(tr("销售价")).toDouble();
-        json["ProductPriceInfo"] = productPriceInfoJsonObject;
-
-        QJsonObject productEntryInfoJsonObject;                     // 商品备案信息
-        productEntryInfoJsonObject["ProductNameEN"] = query.value(tr("商品英文名称")).toString();
-        productEntryInfoJsonObject["Specifications"] = tr("30＊10片");   // ?? 30*10 // query.value(tr("商品规格")).toString();
-        productEntryInfoJsonObject["TaxUnit"] = "g";    // query.value(tr("计税单位")).toString(); // 计税单位, 不能为空!!     //
-        /// 海关关区根据商品所入仓库对应的四位数关区代码填写
-        /// 2244 – 直邮进口模式
-        /// 2216 – 浦东机场自贸模式
-        /// 2249 – 洋山港自贸模式
-        /// 2218 – 外高桥自贸模式
-        productEntryInfoJsonObject["CustomsCode"] = "2244"; // query.value(tr("关区代码")).toString();  // 海关关区根据商品所入仓库对应的四位数关区代码填写        //
-        productEntryInfoJsonObject["StoreType"] = 0;    // query.value(tr("运输方式")).toInt();         // 运输方式（默认0，常温） 0 = 常温 1 = 冷藏 2 = 冷冻     //
-        productEntryInfoJsonObject["ApplyUnit"] = tr("日淘");    // query.value(tr("申报单位")).toString();  // 申报单位, 不能为空        //
-        productEntryInfoJsonObject["ApplyQty"] = 123;   // query.value(tr("申报数量")).toInt();  // 申报数量, 不能为空        //
-        productEntryInfoJsonObject["GrossWeight"] = 1.0;   // query.value(tr("商品毛重")).toDouble();     //
-        productEntryInfoJsonObject["SuttleWeight"] = 0.8;  // query.value(tr("商品净重")).toDouble();    //
-        json["ProductEntryInfo"] = productEntryInfoJsonObject;
-
-        QJsonObject productMaintainInfoJsonObject;                      // 商品维护信息
-        productMaintainInfoJsonObject["ProductModel"] = "123";  // query.value(tr("商品型号")).toString();     //
-        productMaintainInfoJsonObject["Weight"] = 1.0; // query.value(tr("商品物流重量")).toDouble();     //
-        productMaintainInfoJsonObject["Length"] = query.value(tr("长度")).toDouble();
-        productMaintainInfoJsonObject["Width"] = query.value(tr("宽度")).toDouble();
-        productMaintainInfoJsonObject["Height"] = query.value(tr("高度")).toDouble();
-        json["ProductMaintainInfo"] = productMaintainInfoJsonObject;
-
-        qInfo() << tr("MerchantProductID: ") << QString::number(query.value(tr("商品KID")).toInt());
-        qInfo() << tr("ProductName: ") << query.value(tr("商品名称")).toString();
+        skuList.append(sku);
+        item["skuList"] = skuList;
+        itemList.append(item);
+        json["itemList"] = itemList;
 
         QJsonDocument jsonDoc(json);
-//        QFile file("11.txt");
-//        if (file.open(QIODevice::WriteOnly))
-//        {
-//            QTextStream out(&file);
-//            out << jsonDoc.toJson(QJsonDocument::Compact);
-//            file.close();
-//        }
-        qDebug() << jsonDoc.toJson(QJsonDocument::Compact);
-
-        paramsMap["data"] = jsonDoc.toJson(QJsonDocument::Compact);
+        paramsMap["content"] = jsonDoc.toJson(QJsonDocument::Compact);
+        QFile file("11.txt");
+        if (file.open(QIODevice::WriteOnly))
+        {
+            QTextStream out(&file);
+            out << jsonDoc.toJson(QJsonDocument::Compact);
+            file.close();
+        }
         qDebug() << paramsMap;
 
         QString params;
@@ -209,10 +166,9 @@ void ProductUpload::uploadNextProduct()
         }
 
         urlencodePercentConvert(params);
+        QString secret = QCryptographicHash::hash(params.toLatin1(), QCryptographicHash::Md5).toHex();
+        params.append("secret=").append(secret);
         qDebug() << params;
-        QString sign = QCryptographicHash::hash(params.toLatin1(), QCryptographicHash::Md5).toHex();
-        params.append("sign=").append(sign);
-        qDebug() << sign;
 
         QNetworkRequest req;
         req.setUrl(QUrl(g_config.cqdfUrl()));

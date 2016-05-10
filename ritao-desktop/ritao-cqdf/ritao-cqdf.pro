@@ -12,7 +12,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = ritao-cqdf
 TEMPLATE = app
 
-DESTDIR = ../ritao_desktop_bin
+DESTDIR = ../ritao_desktop_bin_cqdf
 
 SOURCES += main.cpp\
         mainwindow.cpp \
