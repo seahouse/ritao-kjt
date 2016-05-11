@@ -200,21 +200,21 @@ void ProductUpload::sReplyFinished(QNetworkReply *reply)
         if (code == true)
         {
             QSqlQuery query;
-            /// 将跨境通的ProductID 存入商品表
+            /// 将重庆地服的outerId 存入商品表（p43）
             QJsonArray array = json.value("body").toArray();
             if (array.size() > 0)
             {
                 QJsonObject data = array.at(0).toObject();
                 QString outerId = data.value("outerId").toString();
-//                query.prepare(tr("update 商品 set p31=:ProductID "
-//                                 "where 商品KID=:id "));
-//                query.bindValue(":ProductID", productID);
-//                query.bindValue(":id", _ohData._currentProductId);
-//                if (!query.exec())
-//                    qInfo() << tr("更新商品的商家ID: ") << query.lastError().text();
+                query.prepare(tr("update 商品 set p43=:outerId "
+                                 "where 商品KID=:id "));
+                query.bindValue(":outerId", outerId);
+                query.bindValue(":id", _ohData._currentProductId);
+                if (!query.exec())
+                    qInfo() << tr("更新重庆地服的outerid失败: ") << query.lastError().text();
             }
 
-            /// 记录同步数据，并进行下一个跨境通同步
+            /// 记录同步数据，并进行下一个重庆地服同步
             query.prepare(tr("update 数据同步 set p2='1' "
                              "where p1='1' and 同步指令='新增' and 同步表名='商品' and 同步主键KID=:id "));
             query.bindValue(":id", _ohData._currentProductId);
