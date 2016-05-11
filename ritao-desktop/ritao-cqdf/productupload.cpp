@@ -167,7 +167,8 @@ void ProductUpload::uploadNextProduct()
 
         urlencodePercentConvert(params);
         QString secret = QCryptographicHash::hash(params.toLatin1(), QCryptographicHash::Md5).toHex();
-        params.append("secret=").append(secret);
+//        params.append("secret=").append(secret);
+        params.append("secret=");       // 暂时留空
         qDebug() << params;
 
         QNetworkRequest req;
@@ -189,29 +190,33 @@ void ProductUpload::sReplyFinished(QNetworkReply *reply)
     qDebug() << replyData;
 
     QJsonObject json(QJsonDocument::fromJson(replyData).object());
-    QString code = json.value("Code").toString("-99");
-    QString desc = json.value("Desc").toString();
+    bool code = json.value("isSuccess").toBool(false);
+    QString desc = json.value("body").toString();
 
     QString opt;
     switch (_optType) {
     case OTProductUploading:
         opt = tr("新增商品");
-        if (code == "0")
+        if (code == true)
         {
             QSqlQuery query;
             /// 将跨境通的ProductID 存入商品表
-            QJsonObject data = json.value("Data").toObject();
-            QString productID = data.value("ProductID").toString();
-            query.prepare(tr("update 商品 set p31=:ProductID "
-                             "where 商品KID=:id "));
-            query.bindValue(":ProductID", productID);
-            query.bindValue(":id", _ohData._currentProductId);
-            if (!query.exec())
-                qInfo() << tr("更新商品的商家ID: ") << query.lastError().text();
+            QJsonArray array = json.value("body").toArray();
+            if (array.size() > 0)
+            {
+                QJsonObject data = array.at(0).toObject();
+                QString outerId = data.value("outerId").toString();
+//                query.prepare(tr("update 商品 set p31=:ProductID "
+//                                 "where 商品KID=:id "));
+//                query.bindValue(":ProductID", productID);
+//                query.bindValue(":id", _ohData._currentProductId);
+//                if (!query.exec())
+//                    qInfo() << tr("更新商品的商家ID: ") << query.lastError().text();
+            }
 
             /// 记录同步数据，并进行下一个跨境通同步
-            query.prepare(tr("update 数据同步 set 跨境通处理=1 "
-                             "where 跨境通=1 and 同步指令='新增' and 同步表名='商品' and 同步主键KID=:id "));
+            query.prepare(tr("update 数据同步 set p2='1' "
+                             "where p1='1' and 同步指令='新增' and 同步表名='商品' and 同步主键KID=:id "));
             query.bindValue(":id", _ohData._currentProductId);
             if (!query.exec())
                 qInfo() << tr("更新数据同步的跨境通商品新增处理: ") << query.lastError().text();
