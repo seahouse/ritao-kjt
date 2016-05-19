@@ -36,7 +36,7 @@ namespace ritao_kjt_web
 
             // 记录到系统日志
             string strSql = "insert into 系统日志(用户名称, 日志类别, 日志日期, 日志内容, 日志备注, 创建日期) " +
-                "values ('跨境通回调', '信息', '" + DateTime.Now.ToString() + "', '" + method + "', '', '" + DateTime.Now.ToString() + "')";
+                "values ('跨境通回调', '信息', '" + DateTime.Now.ToString() + "', '" + method + "', '" + data.Substring(0, 240) +  "', '" + DateTime.Now.ToString() + "')";
             SqlOpt.execSql(strSql);
 
             int status = 0;
