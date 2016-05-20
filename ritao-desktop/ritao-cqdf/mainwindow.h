@@ -6,6 +6,7 @@
 #include "global.h"
 
 class ProductUpload;
+class OrderUpload;
 
 namespace Ui {
 class MainWindow;
@@ -26,6 +27,7 @@ public:
         STOrderDownload,                // 下载跨境通订单到ERP
         STOrderCreateKJTToERP,          // 获取时间区间内的的订单id列表
         STOrderInfoBatchGet,            // 获取订单详细信息并写入ERP数据库
+        STMax,
     };
 
 public:
@@ -34,9 +36,11 @@ public:
 
 private slots:
     void sStart();
+    void sEnd();
     void sTimeout();
 
     void sProductUploadFinished(bool success, const QString &msg);
+    void sOrderUploadFinished(bool success, const QString &msg);
 
 private:
     void output(const QString &msg, MsgType type = MTDebug);          // 将信息输出
@@ -48,7 +52,8 @@ private:
 
     SynchronizeType _synchronizeType;
 
-    ProductUpload *_productUpload;
+    ProductUpload   *_productUpload;
+    OrderUpload     *_orderUpload;
 };
 
 #endif // MAINWINDOW_H

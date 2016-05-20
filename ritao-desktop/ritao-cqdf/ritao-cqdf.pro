@@ -18,12 +18,14 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     productupload.cpp \
     global.cpp \
-    configglobal.cpp
+    configglobal.cpp \
+    orderupload.cpp
 
 HEADERS  += mainwindow.h \
     productupload.h \
     global.h \
     configglobal.h \
-    connection.h
+    connection.h \
+    orderupload.h
 
 FORMS    += mainwindow.ui
