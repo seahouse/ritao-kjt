@@ -50,9 +50,9 @@ void MainWindow::sEnd()
 {
     ui->pbnStart->setEnabled(true);
 
-    _synchronizeType = STProductUpload;
+    _synchronizeType = STNone;
 //    _synchronizeType = STProductDownload;
-    _timer->start(1000);
+    _timer->start(g_config.intervalMinutes() * 60 * 1000);     // 30分钟
 }
 
 void MainWindow::sTimeout()
