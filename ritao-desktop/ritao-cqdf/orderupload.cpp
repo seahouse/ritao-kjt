@@ -57,7 +57,7 @@ void OrderUpload::sTimeout()
         uploadNextOrder();
         break;
     case OTOrderUploadEnd:
-        emit finished(_success, _msgList.join(', ') + ".");
+        emit finished(_success, _msgList.join(", ") + ".");
         break;
     case OTOrderUploadError:
         emit finished(_success, _msg);
@@ -101,6 +101,139 @@ void OrderUpload::uploadNextOrder()
         QJsonArray saleOrderList;
         QJsonObject saleOrder;
 
+        saleOrder["uuid"] = QString::number(query.value("订单KID").toInt());              // uuid
+        saleOrder["orderCode"] = query.value("订单号").toString();                         //
+        saleOrder["hgBarcode"] = "";                                                        //
+        saleOrder["printMsg"] = "";                                                     //
+        saleOrder["orderTax"] = QString::number(query.value("税金").toDouble());          // 税费
+        saleOrder["platFromName"] = "test";                                             // 来源平台名称(OMS指定)
+        saleOrder["shopName"] = "test";                                                 // 店铺名称(OMS指定)展示展销请填写连锁店号
+        /// WAIT_BUYER_PAY(等待买家付款)
+        /// WAIT_SELLER_SEND_GOODS  (等待卖家发货,即:买家已付款)
+        /// WAIT_BUYER_CONFIRM_GOODS(等待买家确认收货,即:卖家已发货)
+        /// TRADE_BUYER_SIGNED(买家已签收,货到付款专用)
+        /// TRADE_FINISHED(交易成功)
+        /// TRADE_CLOSED(付款以后用户退款成功，交易自动关闭)
+        saleOrder["orderStatus"] = "WAIT_SELLER_SEND_GOODS";                            // 交易状态
+        saleOrder["type"] = "fixed";                // 订单类型. fixed(一口价), od(货到付款), ZSZT用于展示展销业务
+        saleOrder["createDate"] = query.value("下单日期").toDate().toString();              // 下单时间
+        saleOrder["updateDate"] = QDate::currentDate().toString();                          // 更新时间
+        saleOrder["payTime"] = query.value("付款日期").toDate().toString();                 // 支付时间
+        saleOrder["logisticsCompanyCode"] = query.value("物流公司").toString();             // 物流公司编码
+        saleOrder["logisticsCompanyName"] = query.value("物流公司").toString();             // 物流公司名称
+        saleOrder["logisticsNumber"] = query.value("运单号").toString();                   // 物流单号
+        saleOrder["postPrice"] = QString::number(query.value("配送费用").toDouble());       // 邮费
+        saleOrder["isDeliveryPay"] = "false";       // 是否货到付款(true/false)
+        saleOrder["bunick"] = query.value("收货人").toString();                            // 会员昵称
+        saleOrder["invoiceName"] = "";                   // 发票抬头 多张发票，用逗号分隔
+        saleOrder["invoiceType"] = "";                   // 发票类型
+        saleOrder["invoiceContent"] = "";                // 发票明细
+        saleOrder["sellersMessage"] = "";                // 卖家留言
+        saleOrder["buyerMessage"] = "";                  // 买家留言
+        saleOrder["merchantMessage"] = "";               // 商家留言
+        saleOrder["amountReceivable"] = QString::number(query.value("订单应付总额").toDouble());      // 应收金额
+        saleOrder["actualPayment"] = QString::number(query.value("订单应付总额").toDouble());         // 实际支付
+
+        QJsonObject receiverOrder;
+        receiverOrder["uuid"] = QString::number(query.value("订单KID").toInt());           // uuid
+        receiverOrder["orderCode"] = query.value("订单号").toString();                     // 订单号
+        receiverOrder["name"] = query.value("收货人").toString();                          // 名字
+        receiverOrder["phone"] = "";                    // 固话
+        receiverOrder["mobilePhone"] = query.value("手机号码").toString();                 // 移动电话号
+        receiverOrder["address"] = query.value("收货地址").toString();                     // 地址
+        QString province = "";
+        QSqlQuery provinceQuery;
+        provinceQuery.prepare("select 省份 from 省份 where 省份KID=:provinceId");
+        provinceQuery.bindValue(":provinceId", query.value("收货省份ID").toInt());
+        if (provinceQuery.exec() && provinceQuery.first())
+            province = provinceQuery.value("省份").toString();
+        receiverOrder["province"] = province;           // 省
+        QString city = "";
+        QSqlQuery cityQuery;
+        cityQuery.prepare("select 城市名称 from 城市 where 城市KID=:cityId");
+        cityQuery.bindValue(":cityId", query.value("收货城市ID").toInt());
+        if (cityQuery.exec() && cityQuery.first())
+            city = cityQuery.value("城市名称").toString();
+        receiverOrder["city"] = city;                   // 市
+        QString district = "";
+        QSqlQuery districtQuery;
+        districtQuery.prepare("select 区域 from 区域 where 区域KID=:districtId");
+        districtQuery.bindValue(":districtId", query.value("收货区域ID").toInt());
+        if (districtQuery.exec() && districtQuery.first())
+            district = districtQuery.value("区域").toString();
+        receiverOrder["district"] = district;           // 市
+        receiverOrder["zip"] = query.value("邮政编码").toString();                      // 名字
+        saleOrder["receiver"] = receiverOrder;
+
+        QJsonArray detailList;
+        QSqlQuery queryDetail;
+        queryDetail.prepare(tr("select * from 订单商品 where 订单ID=:orderId"));
+        queryDetail.bindValue(":orderId", _ohData._currentOrderId);
+        if (queryDetail.exec())
+        {
+            while (queryDetail.next())
+            {
+                QJsonObject detail;
+
+                detail["uuid"] = QString::number(queryDetail.value("订单商品KID").toInt());     // uuid
+                detail["orderCode"] = queryDetail.value("订单号").toString();              // 订单编码
+                detail["orderDetailCode"] = queryDetail.value("订单号").toString();        // uuid
+                detail["skuId"] = "";              // 平台SKU编码
+                QString outerSkuId;
+                QSqlQuery outerSkuIdQuery;
+                outerSkuIdQuery.prepare("select p43 from 商品 where 商品KID=:productId");
+                outerSkuIdQuery.bindValue(":productId", queryDetail.value("商品ID").toInt());
+                if (outerSkuIdQuery.exec() && outerSkuIdQuery.first())
+                    outerSkuId = outerSkuIdQuery.value("p43").toString();
+                detail["outerSkuId"] = outerSkuId;              // 外部Sku编号
+                detail["num"] = QString::number(queryDetail.value("购买数量").toDouble());      // 数量
+                detail["title"] = queryDetail.value("商品名称").toString();    // 商品标题
+                detail["price"] = QString::number(queryDetail.value("销售单价").toDouble());    // 商品价格
+                detail["payment"] = QString::number(queryDetail.value("成交单价").toDouble());  // 单实际金额
+                detail["discountPrice"] = QString::number(queryDetail.value("红包金额").toDouble());        // 优惠金额
+                detail["totalPrice"] = QString::number(queryDetail.value("付款金额").toDouble());// 应付金额
+                detail["adjustPrice"] = "";             // 手工调整金额
+                detail["divideOrderPrice"] = "";        // 分摊之后的实付金额
+                detail["billPrice"] = "";               // 开票金额
+                detail["partMjzDiscount"] = "";         // 优惠分摊
+
+                detailList.append(detail);
+            }
+        }
+        saleOrder["detail"] = detailList;
+
+        saleOrderList.append(saleOrder);
+        json["saleOrderList"] = saleOrderList;
+
+
+
+//        QSqlQuery queryItemList;
+//        queryItemList.prepare(tr("select * from 订单商品 where 订单ID=:orderId"));
+//        queryItemList.bindValue(":orderId", _ohData._currentOrderId);
+//        if (queryItemList.exec())
+//        {
+//            while (queryItemList.next())
+//            {
+//                QJsonObject itemObject;
+
+//                /// 获取商品中的 KJT 商品 ID,
+//                int productIDERP = queryItemList.value(tr("商品ID")).toInt();
+//                QString productIDKJT;
+//                QSqlQuery queryItem;
+//                queryItem.prepare(tr("select * from 商品 where 商品KID=:productIDERP "));
+//                queryItem.bindValue(":productIDERP", productIDERP);
+//                if (queryItem.exec())
+//                    if (queryItem.first())
+//                        productIDKJT = queryItem.value("p31").toString();
+
+//                itemObject["ProductID"] = productIDKJT;                                       // KJT 商品 ID
+//                itemObject["Quantity"] = queryItemList.value(tr("购买数量")).toInt();           // 购买数量
+//                itemObject["SalePrice"] = queryItemList.value(tr("销售单价")).toDouble();       // 商品价格
+//                itemObject["TaxPrice"] = queryItemList.value(tr("税金")).toDouble();
+
+//                itemListObject.append(itemObject);
+//            }
+//        }
 
 //        _ohData._currentOrderNumber = query.value(tr("订单号")).toString();
 //        json["MerchantOrderID"] = _ohData._currentOrderNumber;
@@ -175,7 +308,7 @@ void OrderUpload::uploadNextOrder()
 //        }
 //        json["ItemList"] = itemListObject;
 
-        qInfo() << tr("下单用户真实姓名: ") << query.value(tr("个人姓名")).toString();
+//        qInfo() << tr("下单用户真实姓名: ") << query.value(tr("个人姓名")).toString();
 
         QJsonDocument jsonDoc(json);
 //        QFile file("11.txt");
@@ -206,7 +339,7 @@ void OrderUpload::uploadNextOrder()
         QNetworkRequest req;
         req.setUrl(QUrl(g_config.cqdfUrl()));
         req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-//        _manager->post(req, params.toLatin1());
+        _manager->post(req, params.toLatin1());
     }
     else
     {
