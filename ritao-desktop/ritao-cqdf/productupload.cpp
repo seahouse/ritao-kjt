@@ -191,7 +191,7 @@ void ProductUpload::sReplyFinished(QNetworkReply *reply)
 
     QJsonObject json(QJsonDocument::fromJson(replyData).object());
     bool code = json.value("isSuccess").toBool(false);
-    QString desc = json.value("body").toString();
+    QString body = json.value("body").toString();
 
     QString opt;
     switch (_optType) {
@@ -201,7 +201,7 @@ void ProductUpload::sReplyFinished(QNetworkReply *reply)
         {
             QSqlQuery query;
             /// 将重庆地服的outerId 存入商品表（p43）
-            QJsonArray array = json.value("body").toArray();
+            QJsonArray array = QJsonDocument::fromJson(body.toLatin1()).array();
             if (array.size() > 0)
             {
                 QJsonObject data = array.at(0).toObject();
@@ -226,45 +226,13 @@ void ProductUpload::sReplyFinished(QNetworkReply *reply)
         else
         {
             _optType = OTProductUploadError;
-            _msg = tr("上传商品错误：") + desc;
+            _msg = tr("上传商品错误：") + body;
             _timer->start(1000);
         }
         break;
-//    case STOrderCreateKJTToERP:
-//        opt = tr("获取订单");
-//        _orderCreateKJTToERPData._replyData._code = code;
-//        _orderCreateKJTToERPData._replyData._desc = desc;
-//        if ("0" == code)
-//        {
-//            /// 读取订单id列表
-//            QJsonObject data = json.value("Data").toObject();
-//            _orderCreateKJTToERPData._total = data.value("Total").toInt();
-//            QJsonArray orderIdListArray = data.value("OrderIDList").toArray();
-//            QList<int> orderIdList;
-//            for (int i = 0; i < orderIdListArray.size(); i++)
-//                orderIdList.append(orderIdListArray.at(i).toInt());
-//            _orderCreateKJTToERPData._orderIdList = orderIdList;
-//            qDebug() << "orderIdList:" << _orderCreateKJTToERPData._orderIdList;
-
-//            _orderCreateKJTToERPData._currentIndex = 0;
-//            orderInfoBatchGet();
-//        }
-//        break;
-//    case STOrderInfoBatchGet:
-//        opt = tr("下载订单");
-//        /// 解析数据，写入ERP数据库，并继续请求数据
-//        if ("0" == code)
-//        {
-//            QJsonObject data = json.value("Data").toObject();
-//            QJsonArray orderListArray = data.value("OrderList").toArray();
-//            for (int i = 0; i < orderListArray.size(); i++)
-//                insertOrder2ERPByJson(orderListArray.at(i).toObject());
-//        }
-//        _timer->start(1000);
-//        break;
     default:
         break;
     }
 
-    qInfo() << opt << code << desc;
+    qInfo() << opt << code << body;
 }

@@ -27,7 +27,7 @@
 #define kjt_format "json"            // 接口返回结果类型:json
 #endif
 
-
+#define date_format_str     "yyyy-MM-dd hh:mm:ss"
 
 extern QMap<QString, QString> g_paramsMap;
 

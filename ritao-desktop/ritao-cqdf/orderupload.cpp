@@ -116,9 +116,9 @@ void OrderUpload::uploadNextOrder()
         /// TRADE_CLOSED(付款以后用户退款成功，交易自动关闭)
         saleOrder["orderStatus"] = "WAIT_SELLER_SEND_GOODS";                            // 交易状态
         saleOrder["type"] = "fixed";                // 订单类型. fixed(一口价), od(货到付款), ZSZT用于展示展销业务
-        saleOrder["createDate"] = query.value("下单日期").toDate().toString();              // 下单时间
-        saleOrder["updateDate"] = QDate::currentDate().toString();                          // 更新时间
-        saleOrder["payTime"] = query.value("付款日期").toDate().toString();                 // 支付时间
+        saleOrder["createDate"] = query.value("下单日期").toDateTime().toString(date_format_str);              // 下单时间
+        saleOrder["updateDate"] = QDateTime::currentDateTime().toString(date_format_str);                          // 更新时间
+        saleOrder["payTime"] = query.value("付款日期").toDateTime().toString(date_format_str);                 // 支付时间
         saleOrder["logisticsCompanyCode"] = query.value("物流公司").toString();             // 物流公司编码
         saleOrder["logisticsCompanyName"] = query.value("物流公司").toString();             // 物流公司名称
         saleOrder["logisticsNumber"] = query.value("运单号").toString();                   // 物流单号
@@ -176,8 +176,8 @@ void OrderUpload::uploadNextOrder()
                 QJsonObject detail;
 
                 detail["uuid"] = "";                                                    // uuid
-                detail["orderCode"] = queryDetail.value("订单号").toString();              // 订单编码
-                detail["orderDetailCode"] = queryDetail.value("订单号").toString();        // uuid
+                detail["orderCode"] = query.value("订单号").toString();              // 订单编码
+                detail["orderDetailCode"] = query.value("订单号").toString();        // uuid
                 detail["skuId"] = queryDetail.value("商品编号").toString();                 // 平台SKU编码
                 QString outerSkuId;
                 QSqlQuery outerSkuIdQuery;
@@ -207,13 +207,13 @@ void OrderUpload::uploadNextOrder()
 
         QJsonDocument jsonDoc(json);
         paramsMap["content"] = jsonDoc.toJson(QJsonDocument::Compact);
-//        QFile file("11.txt");
-//        if (file.open(QIODevice::WriteOnly))
-//        {
-//            QTextStream out(&file);
-//            out << jsonDoc.toJson(QJsonDocument::Compact);
-//            file.close();
-//        }
+        QFile file("11.txt");
+        if (file.open(QIODevice::WriteOnly))
+        {
+            QTextStream out(&file);
+            out << jsonDoc.toJson(QJsonDocument::Compact);
+            file.close();
+        }
 
         qDebug() << paramsMap;
 
@@ -298,44 +298,44 @@ void OrderUpload::outputSOWarehouse()
 void OrderUpload::sReplyFinished(QNetworkReply *reply)
 {
     QByteArray replyData = reply->readAll();
-    qInfo() << replyData;
+    qDebug() << replyData;
 
     QJsonObject json(QJsonDocument::fromJson(replyData).object());
-    QString code = json.value("Code").toString("-99");
-    QString desc = json.value("Desc").toString();
+    bool code = json.value("isSuccess").toBool(false);
+    QString body = json.value("body").toString();
 
     QString opt;
     switch (_optType) {
     case OTOrderUploading:
         opt = tr("新增订单");
-        if (code == "0")
+        if (code == true)
         {
             QSqlQuery query;
 
-            QJsonObject data = json.value("Data").toObject();
-            /// 将跨境通的“订单号”存入订单表
-            int orderIdKJT = data.value("SOSysNo").toInt();
-            query.prepare(tr("update 订单 set 第三方订单号=:orderIdKJT "
-                             "where 订单KID=:id "));
-            query.bindValue(":orderIdKJT", QString::number(orderIdKJT));
-            query.bindValue(":id", _ohData._currentOrderId);
-            if (!query.exec())
-                qInfo() << tr("更新订单的第三方订单号: ") << query.lastError().text();
-            /// 将跨境通的“Kjt计算的运费金额”存入订单表
-            /// 将跨境通的“商品跨贸税总金额”存入订单表
-            double shippingAmount = data.value("ShippingAmount").toDouble();
-            double taxAmount = data.value("TaxAmount").toDouble();
-            query.prepare(tr("update 订单 set 订单保价=:shippingAmount, 税金=:taxAmount "
-                             "where 订单KID=:id "));
-            query.bindValue(":shippingAmount", shippingAmount);
-            query.bindValue(":taxAmount", taxAmount);
-            query.bindValue(":id", _ohData._currentOrderId);
-            if (!query.exec())
-                qInfo() << tr("更新订单的Kjt计算的运费金额到订单保价: ") << query.lastError().text();
+//            QJsonObject data = json.value("Data").toObject();
+//            /// 将跨境通的“订单号”存入订单表
+//            int orderIdKJT = data.value("SOSysNo").toInt();
+//            query.prepare(tr("update 订单 set 第三方订单号=:orderIdKJT "
+//                             "where 订单KID=:id "));
+//            query.bindValue(":orderIdKJT", QString::number(orderIdKJT));
+//            query.bindValue(":id", _ohData._currentOrderId);
+//            if (!query.exec())
+//                qInfo() << tr("更新订单的第三方订单号: ") << query.lastError().text();
+//            /// 将跨境通的“Kjt计算的运费金额”存入订单表
+//            /// 将跨境通的“商品跨贸税总金额”存入订单表
+//            double shippingAmount = data.value("ShippingAmount").toDouble();
+//            double taxAmount = data.value("TaxAmount").toDouble();
+//            query.prepare(tr("update 订单 set 订单保价=:shippingAmount, 税金=:taxAmount "
+//                             "where 订单KID=:id "));
+//            query.bindValue(":shippingAmount", shippingAmount);
+//            query.bindValue(":taxAmount", taxAmount);
+//            query.bindValue(":id", _ohData._currentOrderId);
+//            if (!query.exec())
+//                qInfo() << tr("更新订单的Kjt计算的运费金额到订单保价: ") << query.lastError().text();
 
             /// 记录同步数据，并进行下一个跨境通同步
-            query.prepare(tr("update 数据同步 set 跨境通处理=1 "
-                             "where 跨境通=1 and 同步指令='新增' and 同步表名='订单' and 同步主键KID=:id "));
+            query.prepare(tr("update 数据同步 set p2='1' "
+                             "where p1='1' and 同步指令='新增' and 同步表名='订单' and 同步主键KID=:id "));
             query.bindValue(":id", _ohData._currentOrderId);
             if (!query.exec())
                 qInfo() << tr("更新数据同步的跨境通处理: ") << query.lastError().text();
@@ -347,46 +347,14 @@ void OrderUpload::sReplyFinished(QNetworkReply *reply)
             _success = false;
             /// 不记录此错误，继续下一个订单
 //            _optType = OTOrderUploadError;
-//            _msg = tr("上传订单错误：") + desc;
-            _msgList.append("上传订单错误: (" + _ohData._currentOrderNumber + ")" + desc);
+//            _msg = tr("上传订单错误：") + body;
+            _msgList.append("上传订单错误: (" + _ohData._currentOrderNumber + ")" + body);
             _timer->start(1000);
         }
         break;
-//    case STOrderCreateKJTToERP:
-//        opt = tr("获取订单");
-//        _orderCreateKJTToERPData._replyData._code = code;
-//        _orderCreateKJTToERPData._replyData._desc = desc;
-//        if ("0" == code)
-//        {
-//            /// 读取订单id列表
-//            QJsonObject data = json.value("Data").toObject();
-//            _orderCreateKJTToERPData._total = data.value("Total").toInt();
-//            QJsonArray orderIdListArray = data.value("OrderIDList").toArray();
-//            QList<int> orderIdList;
-//            for (int i = 0; i < orderIdListArray.size(); i++)
-//                orderIdList.append(orderIdListArray.at(i).toInt());
-//            _orderCreateKJTToERPData._orderIdList = orderIdList;
-//            qDebug() << "orderIdList:" << _orderCreateKJTToERPData._orderIdList;
-
-//            _orderCreateKJTToERPData._currentIndex = 0;
-//            orderInfoBatchGet();
-//        }
-//        break;
-//    case STOrderInfoBatchGet:
-//        opt = tr("下载订单");
-//        /// 解析数据，写入ERP数据库，并继续请求数据
-//        if ("0" == code)
-//        {
-//            QJsonObject data = json.value("Data").toObject();
-//            QJsonArray orderListArray = data.value("OrderList").toArray();
-//            for (int i = 0; i < orderListArray.size(); i++)
-//                insertOrder2ERPByJson(orderListArray.at(i).toObject());
-//        }
-//        _timer->start(1000);
-//        break;
     default:
         break;
     }
 
-    qInfo() << opt << code << desc;
+    qInfo() << opt << code << body;
 }
