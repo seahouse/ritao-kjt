@@ -227,8 +227,8 @@ void OrderUpload::uploadNextOrder()
 
         urlencodePercentConvert(params);
         QString secret = QCryptographicHash::hash(params.toLatin1(), QCryptographicHash::Md5).toHex();
-//        params.append("secret=").append(secret);
-        params.append("secret=");       // 暂时留空
+        params.append("secret=").append(secret);
+//        params.append("secret=");       // 暂时留空
         qDebug() << params;
 
         QNetworkRequest req;
