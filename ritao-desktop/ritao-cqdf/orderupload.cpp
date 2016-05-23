@@ -175,10 +175,10 @@ void OrderUpload::uploadNextOrder()
             {
                 QJsonObject detail;
 
-                detail["uuid"] = QString::number(queryDetail.value("订单商品KID").toInt());     // uuid
+                detail["uuid"] = "";                                                    // uuid
                 detail["orderCode"] = queryDetail.value("订单号").toString();              // 订单编码
                 detail["orderDetailCode"] = queryDetail.value("订单号").toString();        // uuid
-                detail["skuId"] = "";              // 平台SKU编码
+                detail["skuId"] = queryDetail.value("商品编号").toString();                 // 平台SKU编码
                 QString outerSkuId;
                 QSqlQuery outerSkuIdQuery;
                 outerSkuIdQuery.prepare("select p43 from 商品 where 商品KID=:productId");
