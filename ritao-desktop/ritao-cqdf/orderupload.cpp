@@ -205,112 +205,8 @@ void OrderUpload::uploadNextOrder()
         saleOrderList.append(saleOrder);
         json["saleOrderList"] = saleOrderList;
 
-
-
-//        QSqlQuery queryItemList;
-//        queryItemList.prepare(tr("select * from 订单商品 where 订单ID=:orderId"));
-//        queryItemList.bindValue(":orderId", _ohData._currentOrderId);
-//        if (queryItemList.exec())
-//        {
-//            while (queryItemList.next())
-//            {
-//                QJsonObject itemObject;
-
-//                /// 获取商品中的 KJT 商品 ID,
-//                int productIDERP = queryItemList.value(tr("商品ID")).toInt();
-//                QString productIDKJT;
-//                QSqlQuery queryItem;
-//                queryItem.prepare(tr("select * from 商品 where 商品KID=:productIDERP "));
-//                queryItem.bindValue(":productIDERP", productIDERP);
-//                if (queryItem.exec())
-//                    if (queryItem.first())
-//                        productIDKJT = queryItem.value("p31").toString();
-
-//                itemObject["ProductID"] = productIDKJT;                                       // KJT 商品 ID
-//                itemObject["Quantity"] = queryItemList.value(tr("购买数量")).toInt();           // 购买数量
-//                itemObject["SalePrice"] = queryItemList.value(tr("销售单价")).toDouble();       // 商品价格
-//                itemObject["TaxPrice"] = queryItemList.value(tr("税金")).toDouble();
-
-//                itemListObject.append(itemObject);
-//            }
-//        }
-
-//        _ohData._currentOrderNumber = query.value(tr("订单号")).toString();
-//        json["MerchantOrderID"] = _ohData._currentOrderNumber;
-
-//        /// 获取订单出库仓库在 Kjt平台的编号
-//        int warehouseID = 51;
-//        QSqlQuery queryWarehouseID(tr("select * from 系统参数 where 参数分组='跨境通' and 参数名称='跨境通仓库编码'"));
-//        if (queryWarehouseID.first())
-//            warehouseID = queryWarehouseID.value(tr("参数内容")).toString().toInt();
-//        json["WarehouseID"] = warehouseID;
-
-//        QJsonObject payInfoObject;              // 订单支付信息
-//        payInfoObject["ProductAmount"] = query.value(tr("商品总金额")).toDouble();           // 商品总金额
-//        payInfoObject["ShippingAmount"] = query.value(tr("配送费用")).toDouble();           // 运费总金额
-//        payInfoObject["TaxAmount"] = query.value(tr("税金")).toDouble();                  // 商品行邮税总金额
-//        payInfoObject["CommissionAmount"] = query.value(tr("支付手续费")).toDouble();        // 下单支付产生的手续费
-//        /// 支付方式编号  112: 支付宝 114: 财付通 117: 银联支付 118: 微信支付
-//        payInfoObject["PayTypeSysNo"] = query.value(tr("支付方式")).toInt();                // 支付方式编号
-//        payInfoObject["PaySerialNumber"] = query.value(tr("支付流水号")).toString();         // 支付流水号
-//        json["PayInfo"] = payInfoObject;
-
-//        QJsonObject shippingInfoObject;         // 订单配送信息
-//        shippingInfoObject["ReceiveName"] = query.value(tr("收货人")).toString();          // 收件人姓名
-//        shippingInfoObject["ReceivePhone"] = query.value(tr("手机号码")).toString();        // 收件人电话
-//        shippingInfoObject["ReceiveAddress"] = query.value(tr("收货地址")).toString();      // 收件人收货地址
-//        /// 根据“区域ID”查找“区域”中的“地区编码”
-//        /// 地区编码参考： http://www.stats.gov.cn/tjsj/tjbz/xzqhdm/201401/t20140116_501070.html
-//        QString receiveAreaCode;
-//        QSqlQuery queryAreaCode(tr("select * from 区域 where 区域KID=") + QString::number(query.value(tr("收货区域ID")).toInt()));
-//        if (queryAreaCode.first())
-//            receiveAreaCode = queryAreaCode.value(tr("地区编码")).toString();
-//        shippingInfoObject["ReceiveAreaCode"] = receiveAreaCode;   // query.value(tr("")).toString();   // 收货地区编号
-//        shippingInfoObject["ShipTypeID"] = query.value(tr("物流公司")).toString();              // 订单物流运输公司编号
-//        shippingInfoObject["ReceiveAreaName"] = query.value(tr("注册地址")).toString();         // 收件省市区名称
-//        json["ShippingInfo"] = shippingInfoObject;
-
-//        QJsonObject authenticationInfoObject;       // 下单用户实名认证信息
-//        authenticationInfoObject["Name"] = query.value(tr("个人姓名")).toString();      // 下单用户真实姓名
-//        authenticationInfoObject["IDCardType"] = query.value(tr("发票类型")).toString();
-//        authenticationInfoObject["IDCardNumber"] = query.value(tr("纳税人识别号")).toString();    // 下单用户证件编号
-//        authenticationInfoObject["PhoneNumber"] = query.value(tr("注册电话")).toString();       // 下单用户联系电话
-//        authenticationInfoObject["Email"] = query.value(tr("电子邮件")).toString();     // 下单用户电子邮件
-//        json["AuthenticationInfo"] = authenticationInfoObject;
-
-//        QJsonArray itemListObject;              // 订单中购买商品列表
-//        QSqlQuery queryItemList;
-//        queryItemList.prepare(tr("select * from 订单商品 where 订单ID=:orderId"));
-//        queryItemList.bindValue(":orderId", _ohData._currentOrderId);
-//        if (queryItemList.exec())
-//        {
-//            while (queryItemList.next())
-//            {
-//                QJsonObject itemObject;
-
-//                /// 获取商品中的 KJT 商品 ID,
-//                int productIDERP = queryItemList.value(tr("商品ID")).toInt();
-//                QString productIDKJT;
-//                QSqlQuery queryItem;
-//                queryItem.prepare(tr("select * from 商品 where 商品KID=:productIDERP "));
-//                queryItem.bindValue(":productIDERP", productIDERP);
-//                if (queryItem.exec())
-//                    if (queryItem.first())
-//                        productIDKJT = queryItem.value("p31").toString();
-
-//                itemObject["ProductID"] = productIDKJT;                                       // KJT 商品 ID
-//                itemObject["Quantity"] = queryItemList.value(tr("购买数量")).toInt();           // 购买数量
-//                itemObject["SalePrice"] = queryItemList.value(tr("销售单价")).toDouble();       // 商品价格
-//                itemObject["TaxPrice"] = queryItemList.value(tr("税金")).toDouble();
-
-//                itemListObject.append(itemObject);
-//            }
-//        }
-//        json["ItemList"] = itemListObject;
-
-//        qInfo() << tr("下单用户真实姓名: ") << query.value(tr("个人姓名")).toString();
-
         QJsonDocument jsonDoc(json);
+        paramsMap["content"] = jsonDoc.toJson(QJsonDocument::Compact);
 //        QFile file("11.txt");
 //        if (file.open(QIODevice::WriteOnly))
 //        {
@@ -318,9 +214,7 @@ void OrderUpload::uploadNextOrder()
 //            out << jsonDoc.toJson(QJsonDocument::Compact);
 //            file.close();
 //        }
-        qDebug() << jsonDoc.toJson(QJsonDocument::Compact);
 
-        paramsMap["data"] = jsonDoc.toJson(QJsonDocument::Compact);
         qDebug() << paramsMap;
 
         QString params;
@@ -332,9 +226,10 @@ void OrderUpload::uploadNextOrder()
         }
 
         urlencodePercentConvert(params);
+        QString secret = QCryptographicHash::hash(params.toLatin1(), QCryptographicHash::Md5).toHex();
+//        params.append("secret=").append(secret);
+        params.append("secret=");       // 暂时留空
         qDebug() << params;
-        QString sign = QCryptographicHash::hash(params.toLatin1(), QCryptographicHash::Md5).toHex();
-        params.append("sign=").append(sign);
 
         QNetworkRequest req;
         req.setUrl(QUrl(g_config.cqdfUrl()));
