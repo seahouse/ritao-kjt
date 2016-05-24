@@ -7,6 +7,7 @@
 #include <QDebug>
 
 #include "productupload.h"
+#include "orderupload2hg.h"
 #include "orderupload.h"
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -27,6 +28,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     _productUpload = new ProductUpload;
     connect(_productUpload, SIGNAL(finished(bool,QString)), this, SLOT(sProductUploadFinished(bool, QString)));
+
+    _orderUpload2HG = new OrderUpload2HG;
+    connect(_orderUpload2HG, SIGNAL(finished(bool,QString)), this, SLOT(sOrderUpload2HGFinished(bool, QString)));
 
     _orderUpload = new OrderUpload;
     connect(_orderUpload, SIGNAL(finished(bool,QString)), this, SLOT(sOrderUploadFinished(bool, QString)));
@@ -67,6 +71,9 @@ void MainWindow::sTimeout()
     case STProductDownload:
 //        sDownloadProduct();
         break;
+    case STOrderUpload2HG:
+        _orderUpload2HG->upload();
+        break;
     case STOrderUpload:
         _orderUpload->upload();
         break;
@@ -92,6 +99,15 @@ void MainWindow::sTimeout()
 }
 
 void MainWindow::sProductUploadFinished(bool success, const QString &msg)
+{
+    QString str = success == true ? "成功" : "失败";
+    output(str + ": " + msg);
+
+    _synchronizeType = STOrderUpload2HG;
+    _timer->start(1000);
+}
+
+void MainWindow::sOrderUpload2HGFinished(bool success, const QString &msg)
 {
     QString str = success == true ? "成功" : "失败";
     output(str + ": " + msg);
@@ -123,4 +139,9 @@ void MainWindow::output(const QString &msg, MsgType type)
     default:
         break;
     }
+}
+
+void MainWindow::on_pushButton_clicked()
+{
+    _orderUpload2HG->uploadToHG();
 }

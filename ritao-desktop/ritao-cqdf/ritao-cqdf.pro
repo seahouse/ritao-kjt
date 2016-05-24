@@ -5,7 +5,7 @@
 #-------------------------------------------------
 
 QT       += core gui
-QT += sql network
+QT += sql network xml
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -19,13 +19,15 @@ SOURCES += main.cpp\
     productupload.cpp \
     global.cpp \
     configglobal.cpp \
-    orderupload.cpp
+    orderupload.cpp \
+    orderupload2hg.cpp
 
 HEADERS  += mainwindow.h \
     productupload.h \
     global.h \
     configglobal.h \
     connection.h \
-    orderupload.h
+    orderupload.h \
+    orderupload2hg.h
 
 FORMS    += mainwindow.ui

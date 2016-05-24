@@ -1,5 +1,5 @@
-#ifndef ORDERUPLOAD_H
-#define ORDERUPLOAD_H
+#ifndef ORDERUPLOAD2HG_H
+#define ORDERUPLOAD2HG_H
 
 #include <QObject>
 
@@ -9,7 +9,7 @@ class QTimer;
 class QNetworkAccessManager;
 class QNetworkReply;
 
-class OrderUpload : public QObject
+class OrderUpload2HG : public QObject
 {
     Q_OBJECT
 
@@ -29,7 +29,7 @@ public:
     };
 
 public:
-    explicit OrderUpload(QObject *parent = 0);
+    explicit OrderUpload2HG(QObject *parent = 0);
 
     void upload();
     void uploadToHG();
@@ -59,4 +59,4 @@ private:
     bool _success;                      // 是否处理成功
 };
 
-#endif // ORDERUPLOAD_H
+#endif // ORDERUPLOAD2HG_H

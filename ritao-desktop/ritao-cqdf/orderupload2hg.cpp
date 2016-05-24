@@ -1,4 +1,4 @@
-#include "orderupload.h"
+#include "orderupload2hg.h"
 
 #include "global.h"
 #include "configglobal.h"
@@ -20,7 +20,7 @@
 #include <QFile>
 #include <QDomDocument>
 
-OrderUpload::OrderUpload(QObject *parent) : QObject(parent),
+OrderUpload2HG::OrderUpload2HG(QObject *parent) : QObject(parent),
     _optType(OTNone),
     _success(true)
 {
@@ -31,14 +31,14 @@ OrderUpload::OrderUpload(QObject *parent) : QObject(parent),
     connect(_manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(sReplyFinished(QNetworkReply*)));
 }
 
-void OrderUpload::upload()
+void OrderUpload2HG::upload()
 {
     _orderIdQueue.clear();
     _msgList.clear();
 
     /// 获取需要新增到跨境通的商品KID列表
     QSqlQuery query(tr("select 同步主键KID from 数据同步 "
-                       "where p1='1' and p2='0' and 同步指令='新增' and 同步表名='订单' "
+                       "where p3='1' and p4='0' and 同步指令='新增' and 同步表名='订单' "
                        "order by 数据同步KID "));
     while (query.next())
         _orderIdQueue.enqueue(query.value(tr("同步主键KID")).toInt());
@@ -49,7 +49,7 @@ void OrderUpload::upload()
     _timer->start(1000);
 }
 
-void OrderUpload::sTimeout()
+void OrderUpload2HG::sTimeout()
 {
     _timer->stop();
 
@@ -68,7 +68,7 @@ void OrderUpload::sTimeout()
     }
 }
 
-void OrderUpload::uploadNextOrder()
+void OrderUpload2HG::uploadNextOrder()
 {
     if (_orderIdQueue.isEmpty())
     {
@@ -96,6 +96,40 @@ void OrderUpload::uploadNextOrder()
     {
         QMap<QString, QString> paramsMap(g_paramsMap);
         paramsMap["service"] = "subAddSaleOrder";             // 服务名称
+
+        QDomDocument doc;
+        QDomElement root = doc.createElement("DTC_Message");
+        doc.appendChild(root);
+
+        QDomElement tagMessageHead = doc.createElement("MessageHead");
+        root.appendChild(tagMessageHead);
+
+        QDomElement tag = doc.createElement("MessageType");
+        tagMessageHead.appendChild(tag);
+        QDomText t = doc.createTextNode("ORDER_INFO");
+        tag.appendChild(t);
+
+        tag = doc.createElement("MessageId");
+        tagMessageHead.appendChild(tag);
+        t = doc.createTextNode(query.value("订单号").toString());
+        tag.appendChild(t);
+
+        tag = doc.createElement("ActionType");
+        tagMessageHead.appendChild(tag);
+        t = doc.createTextNode("1");
+        tag.appendChild(t);
+
+        QString data = doc.toString();
+        qDebug() << data;
+        QFile file("11.xml");
+        if (file.open(QIODevice::WriteOnly))
+        {
+            QTextStream out(&file);
+            out << data;
+            file.close();
+        }
+
+
 
         QJsonObject json;
 
@@ -208,13 +242,13 @@ void OrderUpload::uploadNextOrder()
 
         QJsonDocument jsonDoc(json);
         paramsMap["content"] = jsonDoc.toJson(QJsonDocument::Compact);
-        QFile file("11.txt");
-        if (file.open(QIODevice::WriteOnly))
-        {
-            QTextStream out(&file);
-            out << jsonDoc.toJson(QJsonDocument::Compact);
-            file.close();
-        }
+//        QFile file("11.txt");
+//        if (file.open(QIODevice::WriteOnly))
+//        {
+//            QTextStream out(&file);
+//            out << jsonDoc.toJson(QJsonDocument::Compact);
+//            file.close();
+//        }
 
         qDebug() << paramsMap;
 
@@ -235,7 +269,7 @@ void OrderUpload::uploadNextOrder()
         QNetworkRequest req;
         req.setUrl(QUrl(g_config.cqdfUrl()));
         req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-        _manager->post(req, params.toLatin1());
+//        _manager->post(req, params.toLatin1());
     }
     else
     {
@@ -245,7 +279,7 @@ void OrderUpload::uploadNextOrder()
     }
 }
 
-void OrderUpload::uploadToHG()
+void OrderUpload2HG::uploadToHG()
 {
     QString url = "http://113.204.136.28/KJClientReceiver/Data.aspx";
 
@@ -322,7 +356,7 @@ void OrderUpload::uploadToHG()
 //    _manager->post(req, params.toLatin1());
 }
 
-void OrderUpload::sReplyFinished(QNetworkReply *reply)
+void OrderUpload2HG::sReplyFinished(QNetworkReply *reply)
 {
     QByteArray replyData = reply->readAll();
     qDebug() << replyData;
