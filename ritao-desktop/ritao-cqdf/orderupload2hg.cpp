@@ -94,32 +94,38 @@ void OrderUpload2HG::uploadNextOrder()
 
     if (query.first())
     {
+        _doc.clear();
+
         QMap<QString, QString> paramsMap(g_paramsMap);
         paramsMap["service"] = "subAddSaleOrder";             // 服务名称
 
-        QDomDocument doc;
-        QDomElement root = doc.createElement("DTC_Message");
-        doc.appendChild(root);
+//        QDomDocument _doc;
+        QDomElement root = _doc.createElement("DTC_Message");
+        _doc.appendChild(root);
 
-        QDomElement tagMessageHead = doc.createElement("MessageHead");
+        QDomElement tagMessageHead = _doc.createElement("MessageHead");
         root.appendChild(tagMessageHead);
 
-        QDomElement tag = doc.createElement("MessageType");
+        QDomElement tag = _doc.createElement("MessageType");
         tagMessageHead.appendChild(tag);
-        QDomText t = doc.createTextNode("ORDER_INFO");
+        QDomText t = _doc.createTextNode("ORDER_INFO");
         tag.appendChild(t);
 
-        tag = doc.createElement("MessageId");
+        tag = _doc.createElement("MessageId");
         tagMessageHead.appendChild(tag);
-        t = doc.createTextNode(query.value("订单号").toString());
+        t = _doc.createTextNode(QDateTime::currentDateTime().toString("yyyyMMddhhmmss"));
         tag.appendChild(t);
 
-        tag = doc.createElement("ActionType");
-        tagMessageHead.appendChild(tag);
-        t = doc.createTextNode("1");
-        tag.appendChild(t);
+        appendElement(tagMessageHead, "MessageTime", QDateTime::currentDateTime().toString("yyyy-MM-ddThh:mm:ss"));
+//        tag = _doc.createElement("MessageTime");
+//        tagMessageHead.appendChild(tag);
+//        t = _doc.createTextNode(QDateTime::currentDateTime().toString("yyyy-MM-ddThh:mm:ss"));
+//        tag.appendChild(t);
 
-        QString data = doc.toString();
+        appendElement(tagMessageHead, "SenderId", "1234567890");        //
+        appendElement(tagMessageHead, "ReceiverId", "CQITC");
+
+        QString data = _doc.toString();
         qDebug() << data;
         QFile file("11.xml");
         if (file.open(QIODevice::WriteOnly))
@@ -283,24 +289,24 @@ void OrderUpload2HG::uploadToHG()
 {
     QString url = "http://113.204.136.28/KJClientReceiver/Data.aspx";
 
-    QDomDocument doc;
-    QDomElement root = doc.createElement("DTC_Message");
-    doc.appendChild(root);
+    QDomDocument _doc;
+    QDomElement root = _doc.createElement("DTC_Message");
+    _doc.appendChild(root);
 
-    QDomElement tagMessageHead = doc.createElement("MessageHead");
+    QDomElement tagMessageHead = _doc.createElement("MessageHead");
     root.appendChild(tagMessageHead);
 
-    QDomElement tag = doc.createElement("MessageType");
+    QDomElement tag = _doc.createElement("MessageType");
     tagMessageHead.appendChild(tag);
-    QDomText t = doc.createTextNode("ORDER_INFO");
+    QDomText t = _doc.createTextNode("ORDER_INFO");
     tag.appendChild(t);
 
-    tag = doc.createElement("MessageId");
+    tag = _doc.createElement("MessageId");
     tagMessageHead.appendChild(tag);
-    t = doc.createTextNode("aaaa");
+    t = _doc.createTextNode("aaaa");
     tag.appendChild(t);
 
-    QString data = doc.toString();
+    QString data = _doc.toString();
     qDebug() << data;
 
     QFile file("11.xml");
@@ -418,4 +424,12 @@ void OrderUpload2HG::sReplyFinished(QNetworkReply *reply)
     }
 
     qInfo() << opt << code << body;
+}
+
+void OrderUpload2HG::appendElement(QDomElement &tagParent, const QString &name, const QString &value)
+{
+    QDomElement tag = _doc.createElement(name);
+    tagParent.appendChild(tag);
+    QDomText t = _doc.createTextNode(value);
+    tag.appendChild(t);
 }

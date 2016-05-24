@@ -4,6 +4,7 @@
 #include <QObject>
 
 #include <QQueue>
+#include <QDomElement>
 
 class QTimer;
 class QNetworkAccessManager;
@@ -46,6 +47,7 @@ private slots:
 
 private:
     void uploadNextOrder();
+    void appendElement(QDomElement &tagParent, const QString &name, const QString &value);
 
 private:
     QQueue<int> _orderIdQueue;
@@ -57,6 +59,7 @@ private:
     QNetworkAccessManager *_manager;
     OrderHandlerData _ohData;
     bool _success;                      // 是否处理成功
+    QDomDocument _doc;
 };
 
 #endif // ORDERUPLOAD2HG_H
