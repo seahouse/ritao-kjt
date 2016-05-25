@@ -315,7 +315,7 @@ void OrderUpload2HG::uploadToHG()
 void OrderUpload2HG::sReplyFinished(QNetworkReply *reply)
 {
     QByteArray replyData = reply->readAll();
-    qDebug() << replyData;
+    qInfo() << replyData;
 
     QJsonObject json(QJsonDocument::fromJson(replyData).object());
     bool code = json.value("isSuccess").toBool(false);

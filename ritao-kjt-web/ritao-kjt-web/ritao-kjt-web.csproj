@@ -60,6 +60,7 @@
     <Content Include="Account\Register.aspx" />
     <Content Include="OrderSOOutputWarehouse.aspx" />
     <Content Include="RitaoCQDFCallback.aspx" />
+    <Content Include="RitaoCQHGCallback.aspx" />
     <Content Include="RitaoKJTCallback.aspx" />
     <Content Include="Styles\Site.css" />
     <Content Include="Default.aspx" />
@@ -137,6 +138,13 @@
     </Compile>
     <Compile Include="RitaoCQDFCallback.aspx.designer.cs">
       <DependentUpon>RitaoCQDFCallback.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="RitaoCQHGCallback.aspx.cs">
+      <DependentUpon>RitaoCQHGCallback.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="RitaoCQHGCallback.aspx.designer.cs">
+      <DependentUpon>RitaoCQHGCallback.aspx</DependentUpon>
     </Compile>
     <Compile Include="RitaoKJTCallback.aspx.cs">
       <DependentUpon>RitaoKJTCallback.aspx</DependentUpon>
