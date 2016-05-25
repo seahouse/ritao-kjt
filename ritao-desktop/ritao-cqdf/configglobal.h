@@ -19,6 +19,11 @@ public:
     QString cqdfAppkey() const { return _cqdfAppkey; }
     QString cqdfFormat() const { return _cqdfFormat; }
     QString cqdfEncrypt() const { return _cqdfEncrypt; }
+    QString hgCode() const { return _hgCode; }
+    QString hgNumber() const { return _hgNumber; }
+    QString hgName() const { return _hgName; }
+    QString hgPassword() const { return _hgPassword; }
+    QString hgUrl() const { return _hgUrl; }
     int intervalMinutes() const { return _intervalMinutes; }
 
 private:
@@ -33,6 +38,11 @@ private:
     QString _cqdfAppkey;
     QString _cqdfFormat;
     QString _cqdfEncrypt;
+    QString _hgCode;
+    QString _hgNumber;
+    QString _hgName;
+    QString _hgPassword;
+    QString _hgUrl;
     int _intervalMinutes;
 };
 

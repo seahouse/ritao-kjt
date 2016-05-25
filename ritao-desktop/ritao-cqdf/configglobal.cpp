@@ -33,5 +33,10 @@ void ConfigGlobal::read(const QJsonObject &json)
     _cqdfAppkey = json.value("cqdAppkey").toString();
     _cqdfFormat = json.value("cqdFormat").toString();
     _cqdfEncrypt = json.value("cqdEncrypt").toString();
+    _hgCode = json.value("hgCode").toString();
+    _hgNumber = json.value("hgNumber").toString();
+    _hgName = json.value("hgName").toString();
+    _hgPassword = json.value("hgPassword").toString();
+    _hgUrl = json.value("hgUrl").toString();
     _intervalMinutes = json.value("intervalMinutes").toInt(30);
 }

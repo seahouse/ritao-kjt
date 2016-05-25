@@ -7,5 +7,10 @@
 	"cqdAppkey": "",
 	"cqdFormat": "",
 	"cqdEncrypt": "",
+	"hgCode": "",
+	"hgNumber": "",
+	"hgName": "",
+	"hgPassword": "",
+	"hgUrl": "",
 	"intervalMinutes": 30
 }

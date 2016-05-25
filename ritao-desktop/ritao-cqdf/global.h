@@ -28,6 +28,7 @@
 #endif
 
 #define date_format_str     "yyyy-MM-dd hh:mm:ss"
+#define hg_receiver         "CQITC"
 
 extern QMap<QString, QString> g_paramsMap;
 
