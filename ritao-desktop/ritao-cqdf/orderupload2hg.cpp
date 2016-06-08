@@ -113,7 +113,8 @@ void OrderUpload2HG::uploadNextOrder()
 
         tag = _doc.createElement("MessageId");
         tagMessageHead.appendChild(tag);
-        t = _doc.createTextNode(QDateTime::currentDateTime().toString("yyyyMMddhhmmss"));
+        QString messageId = QDateTime::currentDateTime().toString("yyyyMMddhhmmss");
+        t = _doc.createTextNode(messageId);
         tag.appendChild(t);
 
         appendElement(tagMessageHead, "MessageTime", QDateTime::currentDateTime().toString("yyyy-MM-ddThh:mm:ss"));
@@ -125,7 +126,9 @@ void OrderUpload2HG::uploadNextOrder()
         appendElement(tagMessageHead, "SenderId", g_config.hgNumber());        //
         appendElement(tagMessageHead, "ReceiverId", hg_receiver);
         appendElement(tagMessageHead, "UserNo", g_config.hgNumber());
-        appendElement(tagMessageHead, "Password", g_config.hgPassword());
+        QString password = QCryptographicHash::hash(QString(messageId + g_config.hgPassword()).toLatin1(), QCryptographicHash::Md5).toHex();
+        qDebug() << "password: " << password;
+        appendElement(tagMessageHead, "Password", password);
 
         QDomElement tagMessageBody = _doc.createElement("MessageBody");
         root.appendChild(tagMessageBody);
@@ -174,6 +177,14 @@ void OrderUpload2HG::uploadNextOrder()
         appendElement(tagORDER_HEAD, "SORTLINE_ID", sortLineId);                // 分拣线ID. 保税：SORTLINE03, 直邮：SORTLINE04
         appendElement(tagORDER_HEAD, "TRANSPORT_FEE", query.value("配送费用").toString());      // 运费
         appendElement(tagORDER_HEAD, "CHECK_TYPE", "P");                // 验证类型. R:收货人, P:支付人
+        appendElement(tagORDER_HEAD, "BUYER_REG_NO", "");               // 订购人注册号
+        appendElement(tagORDER_HEAD, "BUYER_NAME", query.value(tr("个人姓名")).toString());     // 订购人姓名
+        appendElement(tagORDER_HEAD, "BUYER_ID_TYPE", "1");     // 订购人证件类型  1=身份证，2=其他
+        appendElement(tagORDER_HEAD, "BUYER_ID", query.value(tr("纳税人识别号")).toString());     // 订购人证件号码
+        appendElement(tagORDER_HEAD, "DISCOUNT", "0.00");     // 优惠减免金额
+        double actualPaid = query.value(tr("商品总金额")).toDouble() + query.value(tr("配送费用")).toDouble();
+        appendElement(tagORDER_HEAD, "ACTUAL_PAID", QString::number(actualPaid));     // 实际支付金额
+        appendElement(tagORDER_HEAD, "INSURED_FEE", "0.00");            // 保费
 
         QSqlQuery queryDetail;
         queryDetail.prepare(tr("select * from 订单商品 where 订单ID=:orderId"));
@@ -192,7 +203,7 @@ void OrderUpload2HG::uploadNextOrder()
                 appendElement(tagORDER_DETAIL, "QTY", queryDetail.value("购买数量").toString());      // 商品数量
                 appendElement(tagORDER_DETAIL, "GOODS_FEE", queryDetail.value("付款金额").toString());// 商品总价
                 appendElement(tagORDER_DETAIL, "TAX_FEE", queryDetail.value("税金").toString());     // 税款金额
-
+                appendElement(tagORDER_DETAIL, "COUNTRY", "");     // 原产国
             }
         }
 
@@ -205,9 +216,14 @@ void OrderUpload2HG::uploadNextOrder()
             out << data;
             file.close();
         }
-
-
-
+        QString data2 = _doc.toString();
+        QFile file2("12.xml");
+        if (file2.open(QIODevice::WriteOnly))
+        {
+            QTextStream out(&file2);
+            out << data2;
+            file2.close();
+        }
 
 
 
@@ -216,16 +232,18 @@ void OrderUpload2HG::uploadNextOrder()
         qDebug() << paramsMap;
 
         QString params;
-        params.append("data=").append(data);
+        params.append("data=").append(data.toUtf8());
+        urlencodePercentConvert(params);
+        qDebug() << "dddd";
         qDebug() << params;
-//        qDebug() << params.toUtf8().toBase64();
-//        qDebug() << params.toLatin1().toBase64();
+        qDebug() << params.toUtf8();
+        qDebug() << data.toUtf8().toBase64();
 
         QNetworkRequest req;
         req.setUrl(QUrl(g_config.hgUrl()));
-        req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-//        _manager->post(req, params.toLatin1().toBase64());
-        _manager->post(req, params.toUtf8().toBase64());
+//        req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+        _manager->post(req, data.toUtf8().toBase64());
+//        _manager->post(req, params.toUtf8().toBase64());
     }
     else
     {
