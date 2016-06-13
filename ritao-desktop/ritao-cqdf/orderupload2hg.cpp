@@ -234,15 +234,13 @@ void OrderUpload2HG::uploadNextOrder()
         QString params;
         params.append("data=").append(data.toUtf8());
         urlencodePercentConvert(params);
-        qDebug() << "dddd";
-        qDebug() << params;
         qDebug() << params.toUtf8();
-        qDebug() << data.toUtf8().toBase64();
+        qDebug() << data.toUtf8().toBase64().toPercentEncoding();
 
         QNetworkRequest req;
         req.setUrl(QUrl(g_config.hgUrl()));
 //        req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-        _manager->post(req, data.toUtf8().toBase64());
+        _manager->post(req, QString("data=").append(data.toUtf8().toBase64().toPercentEncoding()).toLatin1());
 //        _manager->post(req, params.toUtf8().toBase64());
     }
     else
