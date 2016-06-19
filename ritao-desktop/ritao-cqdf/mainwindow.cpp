@@ -7,6 +7,7 @@
 #include <QDebug>
 
 #include "productupload.h"
+#include "productupload2hg.h"
 #include "orderupload2hg.h"
 #include "orderupload.h"
 
@@ -25,6 +26,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(_timer, SIGNAL(timeout()), this, SLOT(sTimeout()));
 
     connect(ui->pbnStart, SIGNAL(clicked(bool)), this, SLOT(sStart()));
+
+    _productUpload2HG = new ProductUpload2HG;
+    connect(_productUpload2HG, SIGNAL(finished(bool,QString)), this, SLOT(sProductUpload2HGFinished(bool, QString)));
 
     _productUpload = new ProductUpload;
     connect(_productUpload, SIGNAL(finished(bool,QString)), this, SLOT(sProductUploadFinished(bool, QString)));
@@ -45,7 +49,7 @@ void MainWindow::sStart()
 {
     ui->pbnStart->setEnabled(false);
 
-    _synchronizeType = STProductUpload;
+    _synchronizeType = STProductUpload2HG;
 //    _synchronizeType = STProductDownload;
     _timer->start(1000);
 }
@@ -64,6 +68,9 @@ void MainWindow::sTimeout()
     _timer->stop();
 
     switch (_synchronizeType) {
+    case STProductUpload2HG:
+        _productUpload2HG->upload();
+        break;
     case STProductUpload:
         _productUpload->upload();
 //        on_pushButton_6_clicked();
@@ -96,6 +103,15 @@ void MainWindow::sTimeout()
         break;
     }
 
+}
+
+void MainWindow::sProductUpload2HGFinished(bool success, const QString &msg)
+{
+    QString str = success == true ? "成功" : "失败";
+    output(str + ": " + msg);
+
+    _synchronizeType = STProductUpload;
+    _timer->start(1000);
 }
 
 void MainWindow::sProductUploadFinished(bool success, const QString &msg)

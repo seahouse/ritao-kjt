@@ -1,4 +1,4 @@
-#include "productupload.h"
+#include "productupload2hg.h"
 
 #include "global.h"
 #include "configglobal.h"
@@ -18,7 +18,7 @@
 #include <QNetworkReply>
 
 
-ProductUpload::ProductUpload(QObject *parent) : QObject(parent)
+ProductUpload2HG::ProductUpload2HG(QObject *parent) : QObject(parent)
 {
     _timer = new QTimer;
     connect(_timer, SIGNAL(timeout()), this, SLOT(sTimeout()));
@@ -27,7 +27,7 @@ ProductUpload::ProductUpload(QObject *parent) : QObject(parent)
     connect(_manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(sReplyFinished(QNetworkReply*)));
 }
 
-void ProductUpload::upload()
+void ProductUpload2HG::upload()
 {
     _productIdQueue.clear();
     _msgList.clear();
@@ -35,7 +35,7 @@ void ProductUpload::upload()
     /// 获取需要新增到跨境通的商品KID列表
     /// test erp product id: 6608
     QSqlQuery query(tr("select 同步主键KID from 数据同步 "
-                       "where p1='1' and p2='0' and 同步指令='新增' and 同步表名='商品' "
+                       "where p3='1' and p4='0' and 同步指令='新增' and 同步表名='商品' "
                        "order by 数据同步KID "));
     while (query.next())
         _productIdQueue.enqueue(query.value(tr("同步主键KID")).toInt());
@@ -46,7 +46,7 @@ void ProductUpload::upload()
     _timer->start(1000);
 }
 
-void ProductUpload::sTimeout()
+void ProductUpload2HG::sTimeout()
 {
     _timer->stop();
 
@@ -65,7 +65,7 @@ void ProductUpload::sTimeout()
     }
 }
 
-void ProductUpload::uploadNextProduct()
+void ProductUpload2HG::uploadNextProduct()
 {
     if (_productIdQueue.isEmpty())
     {
@@ -92,17 +92,27 @@ void ProductUpload::uploadNextProduct()
 
     if (query.first())
     {
-//        /// 商品属于保税仓（p1=1），则上传，否则跳过
-//        if (1 != query.value("p1").toInt())
-//        {
-//            _timer->start(1000);
-//            return;
-//        }
-
+        _doc.clear();
         QMap<QString, QString> paramsMap(g_paramsMap);
         paramsMap["service"] = "subItemAddOrUpdate";             // 由接口提供方指定的接口标识符
-//        paramsMap["timestamp"] = QDateTime::currentDateTime().toString("yyyyMMddhhmmss");       // 调用方时间戳，格式为“4 位年+2 位月+2 位日+2 位小时(24 小时制)+2 位分+2 位秒”
-//        paramsMap["nonce"] = QString::number(100000 + qrand() % (999999 - 100000)); // QString::number(100000 + qrand() % (999999 - 100000));
+
+        QDomElement root = _doc.createElement("DTC_Message");
+        _doc.appendChild(root);
+
+        QDomElement tagMessageHead = _doc.createElement("MessageHead");
+        root.appendChild(tagMessageHead);
+
+        appendElement(tagMessageHead, "MessageType", "SKU_INFO");
+        QString messageId = QDateTime::currentDateTime().toString("yyyyMMddhhmmss");
+        appendElement(tagMessageHead, "MessageId", messageId);
+        appendElement(tagMessageHead, "ActionType", "1");
+        appendElement(tagMessageHead, "MessageTime", QDateTime::currentDateTime().toString("yyyy-MM-ddThh:mm:ss"));
+        appendElement(tagMessageHead, "SenderId", g_config.hgNumber());
+        appendElement(tagMessageHead, "ReceiverId", hg_receiver);
+        appendElement(tagMessageHead, "UserNo", g_config.hgNumber());
+        QString password = QCryptographicHash::hash(QString(messageId + g_config.hgPassword()).toLatin1(), QCryptographicHash::Md5).toHex();
+        qDebug() << "password: " << password;
+        appendElement(tagMessageHead, "Password", password);
 
         QJsonObject json;
 
@@ -148,33 +158,51 @@ void ProductUpload::uploadNextProduct()
 
         QJsonDocument jsonDoc(json);
         paramsMap["content"] = jsonDoc.toJson(QJsonDocument::Compact);
-        QFile file("11.txt");
+
+        QString data = _doc.toString(-1);
+        qDebug() << data;
+        QFile file("01.xml");
         if (file.open(QIODevice::WriteOnly))
         {
             QTextStream out(&file);
-            out << jsonDoc.toJson(QJsonDocument::Compact);
+            out << data;
             file.close();
         }
+        QString data2 = _doc.toString();
+        QFile file2("02.xml");
+        if (file2.open(QIODevice::WriteOnly))
+        {
+            QTextStream out(&file2);
+            out << data2;
+            file2.close();
+        }
+
+//        QString params;
+//        QMapIterator<QString, QString> i(paramsMap);
+//        while (i.hasNext())
+//        {
+//            i.next();
+//            params.append(i.key()).append("=").append(i.value().toUtf8().toPercentEncoding()).append("&");
+//        }
+
+//        urlencodePercentConvert(params);
+//        QString secret = QCryptographicHash::hash(params.toLatin1(), QCryptographicHash::Md5).toHex();
+//        params.append("secret=");       // 暂时留空
+//        qDebug() << params;
+
         qDebug() << paramsMap;
 
         QString params;
-        QMapIterator<QString, QString> i(paramsMap);
-        while (i.hasNext())
-        {
-            i.next();
-            params.append(i.key()).append("=").append(i.value().toUtf8().toPercentEncoding()).append("&");
-        }
-
+        params.append("data=").append(data.toUtf8());
         urlencodePercentConvert(params);
-        QString secret = QCryptographicHash::hash(params.toLatin1(), QCryptographicHash::Md5).toHex();
-//        params.append("secret=").append(secret);
-        params.append("secret=");       // 暂时留空
-        qDebug() << params;
+        qDebug() << params.toUtf8();
+        qDebug() << data.toUtf8().toBase64().toPercentEncoding();
 
         QNetworkRequest req;
-        req.setUrl(QUrl(g_config.cqdfUrl()));
-        req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-        _manager->post(req, params.toLatin1());
+        req.setUrl(QUrl(g_config.hgUrl()));
+//        req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+        _manager->post(req, QString("data=").append(data.toUtf8().toBase64().toPercentEncoding()).toLatin1());
+//        _manager->post(req, params.toUtf8().toBase64());
     }
     else
     {
@@ -184,7 +212,7 @@ void ProductUpload::uploadNextProduct()
     }
 }
 
-void ProductUpload::sReplyFinished(QNetworkReply *reply)
+void ProductUpload2HG::sReplyFinished(QNetworkReply *reply)
 {
     QByteArray replyData = reply->readAll();
     qDebug() << replyData;
@@ -226,7 +254,7 @@ void ProductUpload::sReplyFinished(QNetworkReply *reply)
         else
         {
             _optType = OTProductUploadError;
-            _msg = tr("上传商品到地服错误：") + body;
+            _msg = tr("上传商品到海关错误：") + body;
             _timer->start(1000);
         }
         break;
@@ -235,4 +263,12 @@ void ProductUpload::sReplyFinished(QNetworkReply *reply)
     }
 
     qInfo() << opt << code << body;
+}
+
+void ProductUpload2HG::appendElement(QDomElement &tagParent, const QString &name, const QString &value)
+{
+    QDomElement tag = _doc.createElement(name);
+    tagParent.appendChild(tag);
+    QDomText t = _doc.createTextNode(value);
+    tag.appendChild(t);
 }

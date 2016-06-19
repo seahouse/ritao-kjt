@@ -20,7 +20,8 @@ SOURCES += main.cpp\
     global.cpp \
     configglobal.cpp \
     orderupload.cpp \
-    orderupload2hg.cpp
+    orderupload2hg.cpp \
+    productupload2hg.cpp
 
 HEADERS  += mainwindow.h \
     productupload.h \
@@ -28,6 +29,7 @@ HEADERS  += mainwindow.h \
     configglobal.h \
     connection.h \
     orderupload.h \
-    orderupload2hg.h
+    orderupload2hg.h \
+    productupload2hg.h
 
 FORMS    += mainwindow.ui

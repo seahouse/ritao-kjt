@@ -5,6 +5,7 @@
 
 #include "global.h"
 
+class ProductUpload2HG;
 class ProductUpload;
 class OrderUpload2HG;
 class OrderUpload;
@@ -21,6 +22,7 @@ public:
     enum SynchronizeType
     {
         STNone,
+        STProductUpload2HG,             // 上传ERP商品到海关
         STProductUpload,                // 上传ERP商品到地服
         STProductDownload,              // 下载跨境通商品到ERP
         STProductPriceDownload,         // 下载跨境通商品价格到ERP
@@ -41,6 +43,7 @@ private slots:
     void sEnd();
     void sTimeout();
 
+    void sProductUpload2HGFinished(bool success, const QString &msg);
     void sProductUploadFinished(bool success, const QString &msg);
     void sOrderUpload2HGFinished(bool success, const QString &msg);
     void sOrderUploadFinished(bool success, const QString &msg);
@@ -57,6 +60,7 @@ private:
 
     SynchronizeType _synchronizeType;
 
+    ProductUpload2HG   *_productUpload2HG;
     ProductUpload   *_productUpload;
     OrderUpload2HG  *_orderUpload2HG;
     OrderUpload     *_orderUpload;
