@@ -29,14 +29,16 @@ namespace ritao_kjt_web
 
             string str = builder.ToString();
 
+            string strGet = this.Request.QueryString.ToString();
             //string str = Request.Form["data"];
             string method = Request.Form["method"];
             string data = HttpUtility.UrlDecode(Request.Form["data"]);
 
             // 记录到系统日志
             int len = str.Length > 2000 ? 2000 : str.Length;
+            int lenGet = strGet.Length > 2000 ? 2000 : strGet.Length;
             string strSql = "insert into 系统日志(用户名称, 日志类别, 日志日期, 日志内容, 日志备注, 创建日期) " +
-                "values ('重庆海关回调', '信息', '" + DateTime.Now.ToString() + "', '', '" + str.Substring(0, len) + "', '" + DateTime.Now.ToString() + "')";
+                "values ('重庆海关回调', '信息', '" + DateTime.Now.ToString() + "', '" + strGet.Substring(0, lenGet) + "', '" + str.Substring(0, len) + "', '" + DateTime.Now.ToString() + "')";
             SqlOpt.execSql(strSql);
 
             //int status = 0;
